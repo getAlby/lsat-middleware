@@ -8,16 +8,17 @@ import (
 )
 
 func getProtectedResource(c *gin.Context) {
-	authField := c.Request.Header["Authorization"][0]
+	authField, authFieldIsPresent := c.Request.Header["Authorization"]
 
 	// Check invalid tokens (macaroons)
-	if !IsValidMacaroon(authField) {
+	if !authFieldIsPresent || !IsValidMacaroon(authField[0]) {
 		// Generate invoice and token
 		// Example
 		macaroon := "AGIAJEemVQUTEyNCR0exk7ek90Cg=="
 		invoice := "lnbc1500n1pw5kjhmpp5fu6xhthlt2vucmzkx6c7w"
 
-		c.IndentedJSON(http.StatusPaymentRequired, gin.H{"WWW-Authenticate": fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroon, invoice)})
+		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroon, invoice))
+		c.String(http.StatusPaymentRequired, "402 Payment Required")
 	}
 }
 
