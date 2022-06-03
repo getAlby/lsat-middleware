@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"proxy/lnd"
@@ -53,7 +54,7 @@ func main() {
 		MacaroonHex: os.Getenv("MACAROON_HEX"),
 	})
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalf("Failed to create LND client: %v", err)
 	}
 	svc.lndClient = lndClient
 
