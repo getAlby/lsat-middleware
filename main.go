@@ -33,7 +33,35 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 			return
 		}
 
-		macaroon := "AGIAJEemVQUTEyNCR0exk7ek90Cg=="
+		lnMacaroonReq := lnrpc.BakeMacaroonRequest{
+			Permissions: []*lnrpc.MacaroonPermission{
+				{
+					Entity: "invoices",
+					Action: "read",
+				},
+				{
+					Entity: "invoices",
+					Action: "write",
+				},
+				{
+					Entity: "address",
+					Action: "read",
+				},
+				{
+					Entity: "address",
+					Action: "write",
+				},
+			},
+			AllowExternalPermissions: false,
+		}
+
+		lndMacaroon, err := svc.lndClient.BakeMacaroon(ctx, &lnMacaroonReq)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+
+		macaroon := lndMacaroon.Macaroon
 		invoice := lndInvoice.PaymentRequest
 
 		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroon, invoice))
