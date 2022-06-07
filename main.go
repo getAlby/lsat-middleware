@@ -1,21 +1,40 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"proxy/lnd"
+	"proxy/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"github.com/lightningnetwork/lnd/lnrpc"
 )
 
-func getProtectedResource(c *gin.Context) {
+type Service struct {
+	lndClient *lnd.LNDWrapper
+}
+
+func (svc *Service) getProtectedResource(c *gin.Context) {
 	authField, authFieldIsPresent := c.Request.Header["Authorization"]
 
 	// Check invalid tokens (macaroons)
-	if !authFieldIsPresent || !IsValidMacaroon(authField[0]) {
+	if !authFieldIsPresent || !utils.IsValidMacaroon(authField[0]) {
 		// Generate invoice and token
-		// Example
+		ctx := context.Background()
+		lnInvoice := lnrpc.Invoice{}
+
+		lndInvoice, err := svc.lndClient.AddInvoice(ctx, &lnInvoice)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+
 		macaroon := "AGIAJEemVQUTEyNCR0exk7ek90Cg=="
-		invoice := "lnbc1500n1pw5kjhmpp5fu6xhthlt2vucmzkx6c7w"
+		invoice := lndInvoice.PaymentRequest
 
 		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroon, invoice))
 		c.String(http.StatusPaymentRequired, "402 Payment Required")
@@ -24,7 +43,22 @@ func getProtectedResource(c *gin.Context) {
 
 func main() {
 	router := gin.Default()
-	router.GET("/protected", getProtectedResource)
+	svc := &Service{}
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		fmt.Println("Failed to load .env file")
+	}
+	lndClient, err := lnd.NewLNDclient(lnd.LNDoptions{
+		Address:     os.Getenv("LND_ADDRESS"),
+		MacaroonHex: os.Getenv("MACAROON_HEX"),
+	})
+	if err != nil {
+		log.Fatalf("Failed to create LND client: %v", err)
+	}
+	svc.lndClient = lndClient
+
+	router.GET("/protected", svc.getProtectedResource)
 
 	router.Run("localhost:8080")
 }

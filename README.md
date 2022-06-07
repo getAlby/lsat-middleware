@@ -9,8 +9,9 @@
     ```shell
     $ go get .
     ```
-3. To start the server, run
+3. Create `.env` file (refer `.env_example`) and configure `LND_ADDRESS` and `MACAROON_HEX`.
+4. To start the server, run
     ```shell
     $ go run .
     ```
-4. To test the endpoint send a GET request to `http://localhost:8080/protected` through browser, you will observe a response ```402 Payment Required```.
+5. To test the endpoint send a GET request to `http://localhost:8080/protected` through browser, you will observe a response ```402 Payment Required```.
