@@ -93,7 +93,3 @@ func NewLNDclient(lndOptions LNDoptions) (result *LNDWrapper, err error) {
 func (wrapper *LNDWrapper) AddInvoice(ctx context.Context, req *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
 	return wrapper.client.AddInvoice(ctx, req, options...)
 }
-
-func (wrapper *LNDWrapper) BakeMacaroon(ctx context.Context, req *lnrpc.BakeMacaroonRequest, options ...grpc.CallOption) (*lnrpc.BakeMacaroonResponse, error) {
-	return wrapper.client.BakeMacaroon(ctx, req, options...)
-}
