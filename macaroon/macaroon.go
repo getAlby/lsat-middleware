@@ -3,6 +3,7 @@ package macaroon
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/gob"
 
 	"gopkg.in/macaroon.v2"
@@ -14,7 +15,7 @@ type MacaroonIdentifier struct {
 	TokenId     [32]byte
 }
 
-func BakeMacaroon(paymentHash []byte) (*macaroon.Macaroon, error) {
+func GetMacaroonAsString(paymentHash []byte) (*string, error) {
 	rootKey, err := generateRootKey()
 	if err != nil {
 		return nil, err
@@ -25,12 +26,23 @@ func BakeMacaroon(paymentHash []byte) (*macaroon.Macaroon, error) {
 		return nil, err
 	}
 
-	return macaroon.New(
+	mac, err := macaroon.New(
 		rootKey[:],
 		identifier,
 		"LSAT",
 		macaroon.LatestVersion,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	macBytes, err := mac.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+
+	macaroonString := base64.StdEncoding.EncodeToString(macBytes)
+	return &macaroonString, err
 }
 
 func generateMacaroonIdentifier(paymentHash []byte) ([]byte, error) {

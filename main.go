@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -35,21 +34,15 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 			return
 		}
 
-		mac, err := macaroon.BakeMacaroon(lndInvoice.RHash)
-		if err != nil {
-			c.Error(err)
-			return
-		}
-		macBytes, err := mac.MarshalBinary()
-		if err != nil {
-			c.Error(err)
-			return
-		}
-
 		invoice := lndInvoice.PaymentRequest
-		macaroon := base64.StdEncoding.EncodeToString(macBytes)
 
-		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroon, invoice))
+		macaroonString, err := macaroon.GetMacaroonAsString(lnInvoice.RHash)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+
+		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
 		c.String(http.StatusPaymentRequired, "402 Payment Required")
 	}
 }
