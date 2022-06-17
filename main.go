@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"proxy/lnd"
+	"proxy/macaroon"
 	"proxy/utils"
 
 	"github.com/gin-gonic/gin"
@@ -33,38 +34,15 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 			return
 		}
 
-		lnMacaroonReq := lnrpc.BakeMacaroonRequest{
-			Permissions: []*lnrpc.MacaroonPermission{
-				{
-					Entity: "invoices",
-					Action: "read",
-				},
-				{
-					Entity: "invoices",
-					Action: "write",
-				},
-				{
-					Entity: "address",
-					Action: "read",
-				},
-				{
-					Entity: "address",
-					Action: "write",
-				},
-			},
-			AllowExternalPermissions: false,
-		}
+		invoice := lndInvoice.PaymentRequest
 
-		lndMacaroon, err := svc.lndClient.BakeMacaroon(ctx, &lnMacaroonReq)
+		macaroonString, err := macaroon.GetMacaroonAsString(lnInvoice.RHash)
 		if err != nil {
 			c.Error(err)
 			return
 		}
 
-		macaroon := lndMacaroon.Macaroon
-		invoice := lndInvoice.PaymentRequest
-
-		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroon, invoice))
+		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
 		c.String(http.StatusPaymentRequired, "402 Payment Required")
 	}
 }
