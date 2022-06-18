@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"os"
 	"proxy/lnd"
-	"proxy/macaroon"
+	"proxy/lsat"
+	mintMacaroon "proxy/macaroon"
 	"proxy/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/lightningnetwork/lnd/lnrpc"
+	"github.com/lightningnetwork/lnd/lntypes"
+	"gopkg.in/macaroon.v2"
 )
 
 type Service struct {
@@ -22,11 +25,33 @@ type Service struct {
 func (svc *Service) getProtectedResource(c *gin.Context) {
 	authField, authFieldIsPresent := c.Request.Header["Authorization"]
 
+	var IsValidMacaroon bool = false
+	var IsValidPreimage bool = false
+	var IsValidLSAT bool = false
+
+	if authFieldIsPresent {
+		mac := &macaroon.Macaroon{}
+		preimage := lntypes.Preimage{}
+		mac, IsValidMacaroon = utils.ValidMacaroon(authField[0])
+		preimage, IsValidPreimage = utils.ValidPreimage(authField[0])
+
+		if IsValidMacaroon && IsValidPreimage {
+			rootKey := [32]byte{18, 220, 79, 51, 114, 140, 5, 31, 189, 179, 111, 94, 129, 183, 40, 179, 129, 55, 101, 3, 183, 46, 26, 181, 114, 171, 160, 206, 112, 79, 147, 194}
+			err := lsat.VerifyLSAT(mac, rootKey[:], preimage)
+			if err == nil {
+				IsValidLSAT = true
+			}
+		}
+	}
+
 	// Check invalid tokens (macaroons)
-	if !authFieldIsPresent || !utils.IsValidMacaroon(authField[0]) {
+	if !authFieldIsPresent || !IsValidMacaroon {
 		// Generate invoice and token
 		ctx := context.Background()
-		lnInvoice := lnrpc.Invoice{}
+		lnInvoice := lnrpc.Invoice{
+			Value: 5,
+			Memo:  "LSAT",
+		}
 
 		lndInvoice, err := svc.lndClient.AddInvoice(ctx, &lnInvoice)
 		if err != nil {
@@ -35,8 +60,13 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 		}
 
 		invoice := lndInvoice.PaymentRequest
+		paymentHash, err := lntypes.MakeHash(lndInvoice.RHash)
+		if err != nil {
+			c.Error(err)
+			return
+		}
 
-		macaroonString, err := macaroon.GetMacaroonAsString(lnInvoice.RHash)
+		macaroonString, err := mintMacaroon.GetMacaroonAsString(paymentHash)
 		if err != nil {
 			c.Error(err)
 			return
@@ -44,6 +74,13 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 
 		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
 		c.String(http.StatusPaymentRequired, "402 Payment Required")
+		return
+	}
+
+	// Check valid LSAT
+	if authFieldIsPresent && IsValidLSAT {
+		c.String(http.StatusAccepted, "Protected content")
+		return
 	}
 }
 
