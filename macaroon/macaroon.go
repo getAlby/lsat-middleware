@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/gob"
+	"proxy/utils"
 
 	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"
@@ -21,7 +22,7 @@ func GetMacaroonAsString(paymentHash lntypes.Hash) (string, error) {
 	// if err != nil {
 	// 	return "", err
 	// }
-	rootKey := [32]byte{18, 220, 79, 51, 114, 140, 5, 31, 189, 179, 111, 94, 129, 183, 40, 179, 129, 55, 101, 3, 183, 46, 26, 181, 114, 171, 160, 206, 112, 79, 147, 194}
+	rootKey := utils.GetRootKey()
 
 	identifier, err := generateMacaroonIdentifier(paymentHash)
 	if err != nil {
