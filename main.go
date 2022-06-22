@@ -7,12 +7,14 @@ import (
 	"net/http"
 	"os"
 	"proxy/lnd"
-	"proxy/macaroon"
+	"proxy/lsat"
+	macaroonutils "proxy/macaroon"
 	"proxy/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/lightningnetwork/lnd/lnrpc"
+	"github.com/lightningnetwork/lnd/lntypes"
 )
 
 type Service struct {
@@ -20,13 +22,25 @@ type Service struct {
 }
 
 func (svc *Service) getProtectedResource(c *gin.Context) {
-	authField, authFieldIsPresent := c.Request.Header["Authorization"]
+	mac, preimage, err := utils.ParseLsatHeader(c.Request.Header["Authorization"][0])
 
-	// Check invalid tokens (macaroons)
-	if !authFieldIsPresent || !utils.IsValidMacaroon(authField[0]) {
+	// If macaroon and preimage are valid
+	if err == nil {
+		rootKey := utils.GetRootKey()
+
+		// Check valid LSAT and return protected content
+		err := lsat.VerifyLSAT(mac, rootKey[:], preimage)
+		if err != nil {
+			c.String(http.StatusAccepted, "Protected content")
+			return
+		}
+	} else {
 		// Generate invoice and token
 		ctx := context.Background()
-		lnInvoice := lnrpc.Invoice{}
+		lnInvoice := lnrpc.Invoice{
+			Value: 5,
+			Memo:  "LSAT",
+		}
 
 		lndInvoice, err := svc.lndClient.AddInvoice(ctx, &lnInvoice)
 		if err != nil {
@@ -35,8 +49,13 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 		}
 
 		invoice := lndInvoice.PaymentRequest
+		paymentHash, err := lntypes.MakeHash(lndInvoice.RHash)
+		if err != nil {
+			c.Error(err)
+			return
+		}
 
-		macaroonString, err := macaroon.GetMacaroonAsString(lnInvoice.RHash)
+		macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
 		if err != nil {
 			c.Error(err)
 			return
@@ -44,6 +63,7 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 
 		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
 		c.String(http.StatusPaymentRequired, "402 Payment Required")
+		return
 	}
 }
 

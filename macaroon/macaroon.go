@@ -5,25 +5,28 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/gob"
+	"proxy/utils"
 
+	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"
 )
 
 type MacaroonIdentifier struct {
 	Version     uint16
-	PaymentHash []byte
+	PaymentHash lntypes.Hash
 	TokenId     [32]byte
 }
 
-func GetMacaroonAsString(paymentHash []byte) (*string, error) {
-	rootKey, err := generateRootKey()
-	if err != nil {
-		return nil, err
-	}
+func GetMacaroonAsString(paymentHash lntypes.Hash) (string, error) {
+	// rootKey, err := generateRootKey()
+	// if err != nil {
+	// 	return "", err
+	// }
+	rootKey := utils.GetRootKey()
 
 	identifier, err := generateMacaroonIdentifier(paymentHash)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	mac, err := macaroon.New(
@@ -33,19 +36,19 @@ func GetMacaroonAsString(paymentHash []byte) (*string, error) {
 		macaroon.LatestVersion,
 	)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	macBytes, err := mac.MarshalBinary()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	macaroonString := base64.StdEncoding.EncodeToString(macBytes)
-	return &macaroonString, err
+	return macaroonString, err
 }
 
-func generateMacaroonIdentifier(paymentHash []byte) ([]byte, error) {
+func generateMacaroonIdentifier(paymentHash lntypes.Hash) ([]byte, error) {
 	tokenId, err := generateTokenId()
 	if err != nil {
 		return nil, err
