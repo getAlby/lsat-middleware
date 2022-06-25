@@ -22,47 +22,58 @@ type Service struct {
 }
 
 func (svc *Service) getProtectedResource(c *gin.Context) {
-	mac, preimage, err := utils.ParseLsatHeader(c.Request.Header["Authorization"][0])
 
-	// If macaroon and preimage are valid
-	if err == nil {
-		rootKey := utils.GetRootKey()
+	acceptLsatField := c.Request.Header["Accept"]
+	// Check if client support LSAT
+	if len(acceptLsatField) != 0 && acceptLsatField[0] == `application/vnd.lsat.v1.full+json` {
 
-		// Check valid LSAT and return protected content
-		err := lsat.VerifyLSAT(mac, rootKey[:], preimage)
-		if err != nil {
-			c.String(http.StatusAccepted, "Protected content")
+		authField := c.Request.Header["Authorization"]
+		mac, preimage, err := utils.ParseLsatHeader(authField)
+
+		// If macaroon and preimage are valid
+		if err == nil {
+			rootKey := utils.GetRootKey()
+
+			// Check valid LSAT and return protected content
+			err := lsat.VerifyLSAT(mac, rootKey[:], preimage)
+			if err != nil {
+				c.String(http.StatusAccepted, "Protected content")
+				return
+			}
+		} else {
+			// Generate invoice and token
+			ctx := context.Background()
+			lnInvoice := lnrpc.Invoice{
+				Value: 5,
+				Memo:  "LSAT",
+			}
+
+			lndInvoice, err := svc.lndClient.AddInvoice(ctx, &lnInvoice)
+			if err != nil {
+				c.Error(err)
+				return
+			}
+
+			invoice := lndInvoice.PaymentRequest
+			paymentHash, err := lntypes.MakeHash(lndInvoice.RHash)
+			if err != nil {
+				c.Error(err)
+				return
+			}
+
+			macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
+			if err != nil {
+				c.Error(err)
+				return
+			}
+
+			c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
+			c.String(http.StatusPaymentRequired, "402 Payment Required")
 			return
 		}
 	} else {
-		// Generate invoice and token
-		ctx := context.Background()
-		lnInvoice := lnrpc.Invoice{
-			Value: 5,
-			Memo:  "LSAT",
-		}
-
-		lndInvoice, err := svc.lndClient.AddInvoice(ctx, &lnInvoice)
-		if err != nil {
-			c.Error(err)
-			return
-		}
-
-		invoice := lndInvoice.PaymentRequest
-		paymentHash, err := lntypes.MakeHash(lndInvoice.RHash)
-		if err != nil {
-			c.Error(err)
-			return
-		}
-
-		macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
-		if err != nil {
-			c.Error(err)
-			return
-		}
-
-		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
-		c.String(http.StatusPaymentRequired, "402 Payment Required")
+		// Return Free content if client does not support LSAT
+		c.String(http.StatusAccepted, "Free content")
 		return
 	}
 }
