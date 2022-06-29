@@ -22,7 +22,12 @@ type Service struct {
 }
 
 func (svc *Service) getProtectedResource(c *gin.Context) {
-	mac, preimage, err := utils.ParseLsatHeader(c.Request.Header["Authorization"][0])
+
+	acceptLsatField := c.Request.Header["Accept"]
+	// Check if client support LSAT
+
+	authField := c.Request.Header["Authorization"]
+	mac, preimage, err := utils.ParseLsatHeader(authField)
 
 	// If macaroon and preimage are valid
 	if err == nil {
@@ -34,7 +39,7 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 			c.String(http.StatusAccepted, "Protected content")
 			return
 		}
-	} else {
+	} else if len(acceptLsatField) != 0 && acceptLsatField[0] == `application/vnd.lsat.v1.full+json` {
 		// Generate invoice and token
 		ctx := context.Background()
 		lnInvoice := lnrpc.Invoice{
@@ -63,6 +68,10 @@ func (svc *Service) getProtectedResource(c *gin.Context) {
 
 		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
 		c.String(http.StatusPaymentRequired, "402 Payment Required")
+		return
+	} else {
+		// Return Free content if client does not support LSAT
+		c.String(http.StatusAccepted, "Free content")
 		return
 	}
 }
