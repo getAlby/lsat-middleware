@@ -39,6 +39,13 @@ func ParseLsatHeader(authField []string) (*macaroon.Macaroon, lntypes.Preimage, 
 	return mac, preimage, nil
 }
 
+func ParseLnAddress(address string) (string, string) {
+	address = strings.TrimSpace(address)
+	username := strings.Split(address, "@")[0]
+	domain := strings.Split(address, "@")[1]
+	return username, domain
+}
+
 func GetMacaroonFromString(macaroonString string) (*macaroon.Macaroon, error) {
 	if len(macaroonString) == 0 || !IsBase64(macaroonString) {
 		return nil, fmt.Errorf("Invalid macaroon string")
