@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
-	"proxy/invoice"
-	"proxy/lnd"
-	"proxy/lnurl"
+	ln "proxy/lnd"
 	"proxy/lsat"
 	macaroonutils "proxy/macaroon"
 	"proxy/service"
@@ -16,6 +15,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/lightningnetwork/lnd/lnrpc"
+)
+
+const (
+	LND_CLIENT_TYPE   = "LND"
+	LNURL_CLIENT_TYPE = "LNURL"
 )
 
 func getProtectedResource(svc *service.Service) gin.HandlerFunc {
@@ -45,7 +49,7 @@ func getProtectedResource(svc *service.Service) gin.HandlerFunc {
 				Memo:  "LSAT",
 			}
 
-			invoice, paymentHash, err := invoice.GenerateInvoice(svc, ctx, lnInvoice)
+			invoice, paymentHash, err := svc.GenerateInvoice(ctx, lnInvoice)
 			if err != nil {
 				c.Error(err)
 				return
@@ -74,20 +78,26 @@ func main() {
 	if err != nil {
 		fmt.Println("Failed to load .env file")
 	}
-	lndClient, err := lnd.NewLNDclient(lnd.LNDoptions{
-		Address:     os.Getenv("LND_ADDRESS"),
-		MacaroonHex: os.Getenv("MACAROON_HEX"),
-	})
-	if err != nil {
-		fmt.Printf("Failed to create LND client: %v", err)
-	}
-	lnurlClient := &lnurl.LNURLWrapper{
-		Address: os.Getenv("LNURL_ADDRESS"),
+	var lnClient ln.LNClient
+	switch os.Getenv("LN_CLIENT_TYPE") {
+	case LND_CLIENT_TYPE:
+		lnClient, err = ln.NewLNDclient(ln.LNDoptions{
+			Address:     os.Getenv("LND_ADDRESS"),
+			MacaroonHex: os.Getenv("MACAROON_HEX"),
+		})
+		if err != nil {
+			log.Fatalf("Error initializing LN client: %s", err.Error())
+		}
+	case LNURL_CLIENT_TYPE:
+		lnClient = &ln.LNURLWrapper{
+			Address: os.Getenv("LNURL_ADDRESS"),
+		}
+	default:
+		log.Fatalf("LN Client type not recognized: %s", os.Getenv("LN_CLIENT_TYPE"))
 	}
 
 	svc := &service.Service{
-		LndClient:   lndClient,
-		LnurlClient: lnurlClient,
+		LnClient: lnClient,
 	}
 
 	router.GET("/protected", getProtectedResource(svc))

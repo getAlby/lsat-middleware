@@ -1,6 +1,7 @@
-package lnurl
+package ln
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	decodepay "github.com/fiatjaf/ln-decodepay"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
+	"google.golang.org/grpc"
 )
 
 type LNURLWrapper struct {
@@ -41,36 +43,41 @@ type DecodedPR struct {
 	MinFinalCLTVExpiry int    `json:"min_final_cltv_expiry"`
 }
 
-func (wrapper *LNURLWrapper) AddInvoice(lnInvoice *lnrpc.Invoice) (string, lntypes.Hash, error) {
+func (wrapper *LNURLWrapper) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
 	username, domain := utils.ParseLnAddress(wrapper.Address)
 	lnAddressUrl := fmt.Sprintf("https://%v/.well-known/lnurlp/%v", domain, username)
 	lnAddressUrlResBody, err := MakeGetRequest(lnAddressUrl)
 	if err != nil {
-		return "", lntypes.Hash{}, err
+		return nil, err
 	}
 	lnAddressUrlResJson := &LnAddressUrlResJson{}
 	if err := json.Unmarshal(lnAddressUrlResBody, &lnAddressUrlResJson); err != nil {
-		return "", lntypes.Hash{}, err
+		return nil, err
 	}
 
 	callbackUrl := fmt.Sprintf("%v?amount=%v", lnAddressUrlResJson.Callback, 1000*lnInvoice.Value)
 	callbackUrlResBody, err := MakeGetRequest(callbackUrl)
 	if err != nil {
-		return "", lntypes.Hash{}, err
+		return nil, err
 	}
 	callbackUrlResJson := &CallbackUrlResJson{}
 	if err := json.Unmarshal(callbackUrlResBody, &callbackUrlResJson); err != nil {
-		return "", lntypes.Hash{}, err
+		return nil, err
 	}
 
 	invoice := callbackUrlResJson.PR
 	decoded, err := decodepay.Decodepay(invoice)
 	if err != nil {
-		return "", lntypes.Hash{}, err
+		return nil, err
 	}
-
 	paymentHash, err := lntypes.MakeHashFromStr(decoded.PaymentHash)
-	return invoice, paymentHash, nil
+	if err != nil {
+		return nil, err
+	}
+	return &lnrpc.AddInvoiceResponse{
+		RHash:          paymentHash[:],
+		PaymentRequest: invoice,
+	}, nil
 }
 
 func MakeGetRequest(Url string) ([]byte, error) {
