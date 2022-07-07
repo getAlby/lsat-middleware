@@ -1,4 +1,4 @@
-package lnd
+package ln
 
 import (
 	"context"
@@ -23,6 +23,9 @@ type LNDoptions struct {
 	MacaroonHex  string
 }
 
+type LNClient interface {
+	AddInvoice(ctx context.Context, req *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error)
+}
 type LNDWrapper struct {
 	client lnrpc.LightningClient
 }
