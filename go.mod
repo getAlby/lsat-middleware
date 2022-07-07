@@ -3,6 +3,7 @@ module proxy
 go 1.18
 
 require (
+	github.com/fiatjaf/ln-decodepay v1.4.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/joho/godotenv v1.4.0
 	github.com/lightningnetwork/lnd v0.15.0-beta.rc3.0.20220529025925-1e0d6ec0ade4
