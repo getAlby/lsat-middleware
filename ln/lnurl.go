@@ -44,24 +44,27 @@ type DecodedPR struct {
 }
 
 func (wrapper *LNURLWrapper) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
-	username, domain := utils.ParseLnAddress(wrapper.Address)
-	lnAddressUrl := fmt.Sprintf("https://%v/.well-known/lnurlp/%v", domain, username)
-	lnAddressUrlResBody, err := MakeGetRequest(lnAddressUrl)
+	username, domain, err := utils.ParseLnAddress(wrapper.Address)
+	if err != nil {
+		return nil, err
+	}
+	lnAddressUrl := fmt.Sprintf("https://%s/.well-known/lnurlp/%s", domain, username)
+	lnAddressUrlResBody, err := DoGetRequest(lnAddressUrl)
 	if err != nil {
 		return nil, err
 	}
 	lnAddressUrlResJson := &LnAddressUrlResJson{}
-	if err := json.Unmarshal(lnAddressUrlResBody, &lnAddressUrlResJson); err != nil {
+	if err := json.Unmarshal(lnAddressUrlResBody, lnAddressUrlResJson); err != nil {
 		return nil, err
 	}
 
 	callbackUrl := fmt.Sprintf("%v?amount=%v", lnAddressUrlResJson.Callback, 1000*lnInvoice.Value)
-	callbackUrlResBody, err := MakeGetRequest(callbackUrl)
+	callbackUrlResBody, err := DoGetRequest(callbackUrl)
 	if err != nil {
 		return nil, err
 	}
 	callbackUrlResJson := &CallbackUrlResJson{}
-	if err := json.Unmarshal(callbackUrlResBody, &callbackUrlResJson); err != nil {
+	if err := json.Unmarshal(callbackUrlResBody, callbackUrlResJson); err != nil {
 		return nil, err
 	}
 
@@ -80,16 +83,12 @@ func (wrapper *LNURLWrapper) AddInvoice(ctx context.Context, lnInvoice *lnrpc.In
 	}, nil
 }
 
-func MakeGetRequest(Url string) ([]byte, error) {
+func DoGetRequest(Url string) ([]byte, error) {
 	res, err := http.Get(Url)
 	if err != nil {
 		return []byte{}, err
 	}
 	defer res.Body.Close()
 
-	resBody, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return []byte{}, err
-	}
-	return resBody, nil
+	return ioutil.ReadAll(res.Body)
 }
