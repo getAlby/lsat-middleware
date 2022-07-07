@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	ln "proxy/lnd"
+	"proxy/ln"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
@@ -13,13 +13,13 @@ type Service struct {
 }
 
 func (svc *Service) GenerateInvoice(ctx context.Context, lnInvoice lnrpc.Invoice) (string, lntypes.Hash, error) {
-	lndInvoice, err := svc.LnClient.AddInvoice(ctx, &lnInvoice)
+	lnClientInvoice, err := svc.LnClient.AddInvoice(ctx, &lnInvoice)
 	if err != nil {
 		return "", lntypes.Hash{}, err
 	}
 
-	invoice := lndInvoice.PaymentRequest
-	paymentHash, err := lntypes.MakeHash(lndInvoice.RHash)
+	invoice := lnClientInvoice.PaymentRequest
+	paymentHash, err := lntypes.MakeHash(lnClientInvoice.RHash)
 	if err != nil {
 		return invoice, lntypes.Hash{}, err
 	}

@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	ln "proxy/lnd"
+	"proxy/ln"
 	"proxy/lsat"
 	macaroonutils "proxy/macaroon"
 	"proxy/service"
