@@ -87,11 +87,10 @@ func (lsatmiddleware *GinLsatMiddleware) GetProtectedResource() gin.HandlerFunc 
 		if err == nil {
 			rootKey := utils.GetRootKey()
 
-			// Check valid LSAT and return protected content
+			// Check valid LSAT and set LSAT status Paid
 			err := lsat.VerifyLSAT(mac, rootKey[:], preimage)
 			if err != nil {
-				lsatmiddleware.Response(c, http.StatusAccepted, "Protected content")
-				return
+				c.Set("LSAT", "Paid")
 			}
 		} else if len(acceptLsatField) != 0 && acceptLsatField[0] == `application/vnd.lsat.v1.full+json` {
 			// Generate invoice and token
@@ -104,21 +103,20 @@ func (lsatmiddleware *GinLsatMiddleware) GetProtectedResource() gin.HandlerFunc 
 			invoice, paymentHash, err := lsatmiddleware.Service.GenerateInvoice(ctx, lnInvoice)
 			if err != nil {
 				c.Error(err)
-				return
+				c.Set("LSAT", fmt.Sprint(err))
 			}
 			macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
 			if err != nil {
 				c.Error(err)
-				return
+				c.Set("LSAT", fmt.Sprint(err))
 			}
-
 			c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
 			lsatmiddleware.Response(c, http.StatusPaymentRequired, "402 Payment Required")
+			c.Abort()
 			return
 		} else {
-			// Return Free content if client does not support LSAT
-			lsatmiddleware.Response(c, http.StatusAccepted, "Free content")
-			return
+			// Set LSAT status Free if client does not support LSAT
+			c.Set("LSAT", "Free")
 		}
 	}
 }
