@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"proxy/gin_lsat_middleware"
+	"proxy/ginlsat"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,21 +19,28 @@ func main() {
 		})
 	})
 
-	lsatmiddleware, err := gin_lsat_middleware.NewLsatMiddleware(&gin_lsat_middleware.GinLsatMiddleware{})
+	lnClient, err := ginlsat.InitLnClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(&ginlsat.GinLsatMiddleware{
+		Amount:   5,
+		LNClient: lnClient,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	router.Use(lsatmiddleware.GetProtectedResource())
+	router.Use(lsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
-		lsatStatus := c.GetString("LSAT")
-		if lsatStatus == "Free" {
+		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
+		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
 				"message": "Free content",
 			})
-		} else if lsatStatus == "Paid" {
+		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_PAID {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
 				"message": "Protected content",
@@ -40,7 +48,7 @@ func main() {
 		} else {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusInternalServerError,
-				"message": lsatStatus,
+				"message": fmt.Sprint(lsatInfo.Error),
 			})
 		}
 	})
