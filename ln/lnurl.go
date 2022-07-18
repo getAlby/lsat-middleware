@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type LNURLWrapper struct {
+type LNURLoptions struct {
 	Address string
 }
 
@@ -43,7 +43,7 @@ type DecodedPR struct {
 	MinFinalCLTVExpiry int    `json:"min_final_cltv_expiry"`
 }
 
-func (wrapper *LNURLWrapper) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
+func (wrapper *LNURLoptions) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
 	username, domain, err := utils.ParseLnAddress(wrapper.Address)
 	if err != nil {
 		return nil, err

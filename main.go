@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"proxy/ginlsat"
+	"proxy/ln"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -19,7 +22,20 @@ func main() {
 		})
 	})
 
-	lnClient, err := ginlsat.InitLnClient()
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Failed to load .env file")
+	}
+	lnClient, err := ginlsat.InitLnClient(&ln.LNClientConfig{
+		LNClientType: os.Getenv("LN_CLIENT_TYPE"),
+		LNDConfig: ln.LNDoptions{
+			Address:     os.Getenv("LND_ADDRESS"),
+			MacaroonHex: os.Getenv("MACAROON_HEX"),
+		},
+		LNURLConfig: ln.LNURLoptions{
+			Address: os.Getenv("LNURL_ADDRESS"),
+		},
+	})
 	if err != nil {
 		log.Fatal(err)
 	}

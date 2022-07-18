@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"proxy/ln"
 	"proxy/lsat"
 	"proxy/macaroon"
@@ -52,28 +51,23 @@ func NewLsatMiddleware(mw *GinLsatMiddleware) (*GinLsatMiddleware, error) {
 	return mw, nil
 }
 
-func InitLnClient() (ln.LNClient, error) {
+func InitLnClient(lnClientConfig *ln.LNClientConfig) (ln.LNClient, error) {
 	var lnClient ln.LNClient
 	err := godotenv.Load(".env")
 	if err != nil {
 		return lnClient, errors.New("Failed to load .env file")
 	}
 
-	switch os.Getenv("LN_CLIENT_TYPE") {
+	switch lnClientConfig.LNClientType {
 	case LND_CLIENT_TYPE:
-		lnClient, err = ln.NewLNDclient(ln.LNDoptions{
-			Address:     os.Getenv("LND_ADDRESS"),
-			MacaroonHex: os.Getenv("MACAROON_HEX"),
-		})
+		lnClient, err = ln.NewLNDclient(lnClientConfig.LNDConfig)
 		if err != nil {
 			return lnClient, fmt.Errorf("Error initializing LN client: %s", err.Error())
 		}
 	case LNURL_CLIENT_TYPE:
-		lnClient = &ln.LNURLWrapper{
-			Address: os.Getenv("LNURL_ADDRESS"),
-		}
+		lnClient = &lnClientConfig.LNURLConfig
 	default:
-		return lnClient, fmt.Errorf("LN Client type not recognized: %s", os.Getenv("LN_CLIENT_TYPE"))
+		return lnClient, fmt.Errorf("LN Client type not recognized: %s", lnClientConfig.LNClientType)
 	}
 
 	return lnClient, nil
