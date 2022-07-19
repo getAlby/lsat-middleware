@@ -21,7 +21,7 @@ func VerifyLSAT(mac *macaroon.Macaroon, rootKey []byte, preimage lntypes.Preimag
 		return err
 	}
 	if macaroonId.PaymentHash != preimage.Hash() {
-		return fmt.Errorf("Invalid Preimage %v for PaymentHash %v", preimage, macaroonId.PaymentHash)
+		return fmt.Errorf("Invalid Preimage %s for PaymentHash %s", preimage, macaroonId.PaymentHash)
 	}
 	return nil
 }

@@ -27,6 +27,12 @@ const (
 	LSAT_TYPE_PAID = "PAID"
 )
 
+const (
+	FREE_CONTENT_MESSAGE      = "Free Content"
+	PROTECTED_CONTENT_MESSAGE = "Protected Content"
+	PAYMENT_REQUIRED_MESSAGE  = "Payment Required"
+)
+
 type LsatInfo struct {
 	Type     string
 	Preimage lntypes.Preimage
@@ -118,8 +124,8 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 			})
 			return
 		}
-		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
-		lsatmiddleware.Response(c, http.StatusPaymentRequired, "402 Payment Required")
+		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%s, invoice=%s", macaroonString, invoice))
+		lsatmiddleware.Response(c, http.StatusPaymentRequired, PAYMENT_REQUIRED_MESSAGE)
 		c.Abort()
 	} else {
 		// Set LSAT type Free if client does not support LSAT

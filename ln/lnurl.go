@@ -58,7 +58,7 @@ func (wrapper *LNURLoptions) AddInvoice(ctx context.Context, lnInvoice *lnrpc.In
 		return nil, err
 	}
 
-	callbackUrl := fmt.Sprintf("%v?amount=%v", lnAddressUrlResJson.Callback, 1000*lnInvoice.Value)
+	callbackUrl := fmt.Sprintf("%s?amount=%d", lnAddressUrlResJson.Callback, 1000*lnInvoice.Value)
 	callbackUrlResBody, err := DoGetRequest(callbackUrl)
 	if err != nil {
 		return nil, err
