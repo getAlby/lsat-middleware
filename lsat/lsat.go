@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	macaroonutils "proxy/macaroon"
+
+	macaroonutils "github.com/DhananjayPurohit/gin-lsat/macaroon"
 
 	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"

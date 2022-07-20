@@ -5,8 +5,8 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/gob"
-	"proxy/utils"
 
+	"github.com/DhananjayPurohit/gin-lsat/utils"
 	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"
 )

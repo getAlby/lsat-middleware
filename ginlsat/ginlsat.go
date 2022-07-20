@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"proxy/ln"
-	"proxy/lsat"
-	"proxy/macaroon"
-	macaroonutils "proxy/macaroon"
-	"proxy/utils"
+
+	"github.com/DhananjayPurohit/gin-lsat/utils"
+
+	"github.com/DhananjayPurohit/gin-lsat/ln"
+	"github.com/DhananjayPurohit/gin-lsat/lsat"
+	"github.com/DhananjayPurohit/gin-lsat/macaroon"
+	macaroonutils "github.com/DhananjayPurohit/gin-lsat/macaroon"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"

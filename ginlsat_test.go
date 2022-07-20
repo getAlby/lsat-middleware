@@ -1,13 +1,14 @@
-package ginlsat_test
+package ginlsat
 
 import (
 	"fmt"
 	"net/http"
 	"os"
-	"proxy/ginlsat"
-	"proxy/ln"
 	"strings"
 	"testing"
+
+	"github.com/DhananjayPurohit/gin-lsat/ginlsat"
+	"github.com/DhananjayPurohit/gin-lsat/ln"
 
 	"github.com/appleboy/gofight/v2"
 	"github.com/gin-gonic/gin"

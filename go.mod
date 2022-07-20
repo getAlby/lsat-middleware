@@ -1,4 +1,4 @@
-module proxy
+module github.com/DhananjayPurohit/gin-lsat
 
 go 1.18
 
