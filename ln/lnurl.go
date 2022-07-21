@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const MSAT_PER_SAT = 1000
+
 type LNURLoptions struct {
 	Address string
 }
@@ -59,7 +61,7 @@ func (wrapper *LNURLoptions) AddInvoice(ctx context.Context, lnInvoice *lnrpc.In
 		return nil, err
 	}
 
-	callbackUrl := fmt.Sprintf("%s?amount=%d", lnAddressUrlResJson.Callback, 1000*lnInvoice.Value)
+	callbackUrl := fmt.Sprintf("%s?amount=%d", lnAddressUrlResJson.Callback, MSAT_PER_SAT*lnInvoice.Value)
 	callbackUrlResBody, err := DoGetRequest(callbackUrl)
 	if err != nil {
 		return nil, err

@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/DhananjayPurohit/gin-lsat/utils"
-
 	"github.com/DhananjayPurohit/gin-lsat/ln"
 	"github.com/DhananjayPurohit/gin-lsat/lsat"
 	"github.com/DhananjayPurohit/gin-lsat/macaroon"
 	macaroonutils "github.com/DhananjayPurohit/gin-lsat/macaroon"
+	"github.com/DhananjayPurohit/gin-lsat/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
