@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"proxy/ginlsat"
-	"proxy/ln"
 
+	"github.com/DhananjayPurohit/gin-lsat/ginlsat"
+	"github.com/DhananjayPurohit/gin-lsat/ln"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )

@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"proxy/ln"
-	"proxy/lsat"
-	"proxy/macaroon"
-	macaroonutils "proxy/macaroon"
-	"proxy/utils"
+
+	"github.com/DhananjayPurohit/gin-lsat/ln"
+	"github.com/DhananjayPurohit/gin-lsat/lsat"
+	"github.com/DhananjayPurohit/gin-lsat/macaroon"
+	macaroonutils "github.com/DhananjayPurohit/gin-lsat/macaroon"
+	"github.com/DhananjayPurohit/gin-lsat/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -25,6 +26,12 @@ const (
 const (
 	LSAT_TYPE_FREE = "FREE"
 	LSAT_TYPE_PAID = "PAID"
+)
+
+const (
+	FREE_CONTENT_MESSAGE      = "Free Content"
+	PROTECTED_CONTENT_MESSAGE = "Protected Content"
+	PAYMENT_REQUIRED_MESSAGE  = "Payment Required"
 )
 
 type LsatInfo struct {
@@ -118,8 +125,8 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 			})
 			return
 		}
-		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%v, invoice=%v", macaroonString, invoice))
-		lsatmiddleware.Response(c, http.StatusPaymentRequired, "402 Payment Required")
+		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%s, invoice=%s", macaroonString, invoice))
+		lsatmiddleware.Response(c, http.StatusPaymentRequired, PAYMENT_REQUIRED_MESSAGE)
 		c.Abort()
 	} else {
 		// Set LSAT type Free if client does not support LSAT

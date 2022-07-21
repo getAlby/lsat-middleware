@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	macaroonutils "proxy/macaroon"
+
+	macaroonutils "github.com/DhananjayPurohit/gin-lsat/macaroon"
 
 	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"
@@ -21,7 +22,7 @@ func VerifyLSAT(mac *macaroon.Macaroon, rootKey []byte, preimage lntypes.Preimag
 		return err
 	}
 	if macaroonId.PaymentHash != preimage.Hash() {
-		return fmt.Errorf("Invalid Preimage %v for PaymentHash %v", preimage, macaroonId.PaymentHash)
+		return fmt.Errorf("Invalid Preimage %s for PaymentHash %s", preimage, macaroonId.PaymentHash)
 	}
 	return nil
 }

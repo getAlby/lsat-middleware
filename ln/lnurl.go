@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"proxy/utils"
+
+	"github.com/DhananjayPurohit/gin-lsat/utils"
 
 	decodepay "github.com/fiatjaf/ln-decodepay"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
 	"google.golang.org/grpc"
 )
+
+const MSAT_PER_SAT = 1000
 
 type LNURLoptions struct {
 	Address string
@@ -58,7 +61,7 @@ func (wrapper *LNURLoptions) AddInvoice(ctx context.Context, lnInvoice *lnrpc.In
 		return nil, err
 	}
 
-	callbackUrl := fmt.Sprintf("%v?amount=%v", lnAddressUrlResJson.Callback, 1000*lnInvoice.Value)
+	callbackUrl := fmt.Sprintf("%s?amount=%d", lnAddressUrlResJson.Callback, MSAT_PER_SAT*lnInvoice.Value)
 	callbackUrlResBody, err := DoGetRequest(callbackUrl)
 	if err != nil {
 		return nil, err

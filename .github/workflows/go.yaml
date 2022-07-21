@@ -1,0 +1,33 @@
+name: Integration tests
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+      strategy:
+        matrix:
+          go-version: [ 1.18.x ]
+          platform: [ ubuntu-latest ]
+      runs-on: ${{ matrix.platform }}
+      steps:
+          - name: Install Go
+            uses: actions/setup-go@v1
+            with:
+              go-version: ${{ matrix.go-version }}
+          - name: Checkout code
+            uses: actions/checkout@v2
+          - name: 'Create env file'
+            run: |
+              touch .env
+              echo LND_ADDRESS=${{ secrets.LND_ADDRESS }} >> .env
+              echo MACAROON_HEX=${{ secrets.MACAROON_HEX }} >> .env
+              echo LNURL_ADDRESS=${{ secrets.LNURL_ADDRESS }} >> .env
+              echo ROOT_KEY=${{ secrets.ROOT_KEY }} >> .env
+              echo TEST_MACAROON=${{ secrets.TEST_MACAROON }} >> .env
+              echo TEST_PREIMAGE=${{ secrets.TEST_PREIMAGE }} >> .env
+              cat .env
+          - name: Run tests
+            run:  go test -v ./...
