@@ -1,17 +1,23 @@
-# LSAT-Go-proxy
+# Gin-LSAT
 
-## A proxy server implementation in Go to support LSAT protocol.
+A middleware for [Gin](https://github.com/gin-gonic/gin) framework that uses [LSAT](https://lsat.tech/) (a protocol standard for authentication and paid APIs) and provides handler functions to accept microtransactions before serving ad-free content or any paid APIs.
 
-### Steps to run:-
+## Installation
 
-1. Clone the repo.
-2. In the repo folder, run the command 
-    ```shell
-    $ go get .
-    ```
-3. Create `.env` file (refer `.env_example`) and configure `LND_ADDRESS` and `MACAROON_HEX`.
-4. To start the server, run
-    ```shell
-    $ go run .
-    ```
-5. To test the endpoint send a GET request to `http://localhost:8080/protected` through browser, you will observe a response ```402 Payment Required```.
+Assuming you've installed Go and Gin 
+
+1. Run this:
+
+```
+go get github.com/DhananjayPurohit/gin-lsat
+```
+
+2. Create `.env` file (refer `.env_example`) and configure `LND_ADDRESS` and `MACAROON_HEX` for LND client or `LNURL_ADDRESS` for LNURL client, `LN_CLIENT_TYPE` (out of LND, LNURL) and `ROOT_KEY` (for minting macaroons).  
+
+## Usage
+
+[This example](https://github.com/DhananjayPurohit/gin-lsat/blob/middleware-test/examples/main.go) shows how to use Gin-LSAT.
+
+## Testing
+
+Run `go test` to run tests.
