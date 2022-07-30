@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/DhananjayPurohit/gin-lsat/ginlsat"
-	"github.com/DhananjayPurohit/gin-lsat/ln"
+	"github.com/getAlby/gin-lsat/ginlsat"
+	"github.com/getAlby/gin-lsat/ln"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )

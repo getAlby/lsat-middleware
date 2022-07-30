@@ -1,4 +1,4 @@
-module github.com/DhananjayPurohit/gin-lsat
+module github.com/getAlby/gin-lsat
 
 go 1.18
 

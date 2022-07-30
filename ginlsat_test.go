@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DhananjayPurohit/gin-lsat/ginlsat"
-	"github.com/DhananjayPurohit/gin-lsat/ln"
+	"github.com/getAlby/gin-lsat/ginlsat"
+	"github.com/getAlby/gin-lsat/ln"
 
 	"github.com/appleboy/gofight/v2"
 	"github.com/gin-gonic/gin"
