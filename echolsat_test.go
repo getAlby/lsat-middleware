@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DhananjayPurohit/echo-lsat/echolsat"
-	"github.com/DhananjayPurohit/echo-lsat/ln"
+	"github.com/getAlby/echo-lsat/echolsat"
+	"github.com/getAlby/echo-lsat/ln"
 
 	"github.com/labstack/echo/v4"
 
