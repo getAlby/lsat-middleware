@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"echo-lsat/ln"
-	"echo-lsat/lsat"
-	"echo-lsat/macaroon"
-	macaroonutils "echo-lsat/macaroon"
-	"echo-lsat/utils"
+	"github.com/getAlby/echo-lsat/ln"
+	"github.com/getAlby/echo-lsat/lsat"
+	"github.com/getAlby/echo-lsat/macaroon"
+	macaroonutils "github.com/getAlby/echo-lsat/macaroon"
+	"github.com/getAlby/echo-lsat/utils"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
