@@ -32,6 +32,8 @@ func AmountFunc(req *http.Request) (amount int64) {
 	if err != nil {
 		return MIN_SATS_TO_BE_PAID
 	}
+	defer res.Body.Close()
+
 	amountBits, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return MIN_SATS_TO_BE_PAID
