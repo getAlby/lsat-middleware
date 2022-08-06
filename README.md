@@ -48,6 +48,10 @@ func FiatToBTC(currency string, value float64) *http.Request {
 }
 
 func AmountFunc(req *http.Request) (amount int64) {
+	if req == nil {
+		return MIN_SATS_TO_BE_PAID
+	}
+
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
