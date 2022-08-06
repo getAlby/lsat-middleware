@@ -37,6 +37,8 @@ import (
 
 const SATS_PER_BTC = 100000000
 
+const MIN_SATS_TO_BE_PAID = 1
+
 func FiatToBTC(currency string, value float64) *http.Request {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://blockchain.info/tobtc?currency=%s&value=%f", currency, value), nil)
 	if err != nil {
@@ -49,15 +51,15 @@ func AmountFunc(req *http.Request) (amount int64) {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return 0
+		return MIN_SATS_TO_BE_PAID
 	}
 	amountBits, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return 0
+		return MIN_SATS_TO_BE_PAID
 	}
 	amountInBTC, err := strconv.ParseFloat(string(amountBits), 32)
 	if err != nil {
-		return 0
+		return MIN_SATS_TO_BE_PAID
 	}
 	amountInSats := SATS_PER_BTC * amountInBTC
 	return int64(amountInSats)
