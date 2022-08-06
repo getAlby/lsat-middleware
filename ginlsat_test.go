@@ -2,8 +2,10 @@ package ginlsat
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -16,6 +18,34 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/gjson"
 )
+
+const SATS_PER_BTC = 100000000
+
+func FiatToBTC(currency string, value float64) *http.Request {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://blockchain.info/tobtc?currency=%s&value=%f", currency, value), nil)
+	if err != nil {
+		return nil
+	}
+	return req
+}
+
+func AmountFunc(req *http.Request) (amount int64) {
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return 0
+	}
+	amountBits, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return 0
+	}
+	amountInBTC, err := strconv.ParseFloat(string(amountBits), 32)
+	if err != nil {
+		return 0
+	}
+	amountInSats := SATS_PER_BTC * amountInBTC
+	return int64(amountInSats)
+}
 
 func ginLsatHandler(lsatmiddleware *ginlsat.GinLsatMiddleware) *gin.Engine {
 	gin.SetMode(gin.TestMode)
@@ -57,18 +87,16 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 	err := godotenv.Load(".env")
 	assert.NoError(t, err)
 
-	lnClient, err := ginlsat.InitLnClient(&ln.LNClientConfig{
+	lnClientConfig := &ln.LNClientConfig{
 		LNClientType: "LNURL",
 		LNURLConfig: ln.LNURLoptions{
 			Address: os.Getenv("LNURL_ADDRESS"),
 		},
-	})
+	}
 	assert.NoError(t, err)
 
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(&ginlsat.GinLsatMiddleware{
-		Amount:   5,
-		LNClient: lnClient,
-	})
+	req := FiatToBTC("USD", 0.01)
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc, req)
 
 	handler := ginLsatHandler(lsatmiddleware)
 
@@ -119,19 +147,17 @@ func TestLsatWithLNDConfig(t *testing.T) {
 	err := godotenv.Load(".env")
 	assert.NoError(t, err)
 
-	lnClient, err := ginlsat.InitLnClient(&ln.LNClientConfig{
+	lnClientConfig := &ln.LNClientConfig{
 		LNClientType: "LND",
 		LNDConfig: ln.LNDoptions{
 			Address:     os.Getenv("LND_ADDRESS"),
 			MacaroonHex: os.Getenv("MACAROON_HEX"),
 		},
-	})
+	}
 	assert.NoError(t, err)
 
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(&ginlsat.GinLsatMiddleware{
-		Amount:   5,
-		LNClient: lnClient,
-	})
+	req := FiatToBTC("USD", 0.01)
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc, req)
 
 	handler := ginLsatHandler(lsatmiddleware)
 

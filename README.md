@@ -23,15 +23,45 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/getAlby/gin-lsat/ginlsat"
 	"github.com/getAlby/gin-lsat/ln"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
+
+const SATS_PER_BTC = 100000000
+
+func FiatToBTC(currency string, value float64) *http.Request {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://blockchain.info/tobtc?currency=%s&value=%f", currency, value), nil)
+	if err != nil {
+		return nil
+	}
+	return req
+}
+
+func AmountFunc(req *http.Request) (amount int64) {
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return 0
+	}
+	amountBits, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return 0
+	}
+	amountInBTC, err := strconv.ParseFloat(string(amountBits), 32)
+	if err != nil {
+		return 0
+	}
+	amountInSats := SATS_PER_BTC * amountInBTC
+	return int64(amountInSats)
+}
 
 func main() {
 	router := gin.Default()
@@ -47,7 +77,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to load .env file")
 	}
-	lnClient, err := ginlsat.InitLnClient(&ln.LNClientConfig{
+	lnClientConfig := &ln.LNClientConfig{
 		LNClientType: os.Getenv("LN_CLIENT_TYPE"),
 		LNDConfig: ln.LNDoptions{
 			Address:     os.Getenv("LND_ADDRESS"),
@@ -56,14 +86,9 @@ func main() {
 		LNURLConfig: ln.LNURLoptions{
 			Address: os.Getenv("LNURL_ADDRESS"),
 		},
-	})
-	if err != nil {
-		log.Fatal(err)
 	}
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(&ginlsat.GinLsatMiddleware{
-		Amount:   5,
-		LNClient: lnClient,
-	})
+	req := FiatToBTC("USD", 0.01)
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc, req)
 	if err != nil {
 		log.Fatal(err)
 	}
