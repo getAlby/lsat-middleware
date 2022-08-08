@@ -43,19 +43,21 @@ type LsatInfo struct {
 }
 
 type EchoLsatMiddleware struct {
-	Amount   int64
-	Response func(c echo.Context, code int, message string)
-	LNClient ln.LNClient
+	AmountFunc func(req *http.Request) (amount int64)
+	LNClient   ln.LNClient
 }
 
-func NewLsatMiddleware(mw *EchoLsatMiddleware) (*EchoLsatMiddleware, error) {
-	mw.Response = func(c echo.Context, code int, message string) {
-		c.JSON(code, map[string]interface{}{
-			"code":    code,
-			"message": message,
-		})
+func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
+	amountFunc func(req *http.Request) (amount int64)) (*EchoLsatMiddleware, error) {
+	lnClient, err := InitLnClient(lnClientConfig)
+	if err != nil {
+		return nil, err
 	}
-	return mw, nil
+	middleware := &EchoLsatMiddleware{
+		AmountFunc: amountFunc,
+		LNClient:   lnClient,
+	}
+	return middleware, nil
 }
 
 func InitLnClient(lnClientConfig *ln.LNClientConfig) (ln.LNClient, error) {
@@ -72,7 +74,10 @@ func InitLnClient(lnClientConfig *ln.LNClientConfig) (ln.LNClient, error) {
 			return lnClient, fmt.Errorf("Error initializing LN client: %s", err.Error())
 		}
 	case LNURL_CLIENT_TYPE:
-		lnClient = &lnClientConfig.LNURLConfig
+		lnClient, err = ln.NewLNURLClient(lnClientConfig.LNURLConfig)
+		if err != nil {
+			return lnClient, fmt.Errorf("Error initializing LN client: %s", err.Error())
+		}
 	default:
 		return lnClient, fmt.Errorf("LN Client type not recognized: %s", lnClientConfig.LNClientType)
 	}
@@ -104,7 +109,7 @@ func (lsatmiddleware *EchoLsatMiddleware) Handler(next echo.HandlerFunc) echo.Ha
 			// Generate invoice and token
 			ctx := context.Background()
 			lnInvoice := lnrpc.Invoice{
-				Value: lsatmiddleware.Amount,
+				Value: lsatmiddleware.AmountFunc(c.Echo().AcquireContext().Request()),
 				Memo:  "LSAT",
 			}
 			LNClientConn := &ln.LNClientConn{
@@ -125,7 +130,10 @@ func (lsatmiddleware *EchoLsatMiddleware) Handler(next echo.HandlerFunc) echo.Ha
 				})
 			}
 			c.Response().Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%s, invoice=%s", macaroonString, invoice))
-			lsatmiddleware.Response(c, http.StatusPaymentRequired, PAYMENT_REQUIRED_MESSAGE)
+			c.JSON(http.StatusPaymentRequired, map[string]interface{}{
+				"code":    http.StatusPaymentRequired,
+				"message": PAYMENT_REQUIRED_MESSAGE,
+			})
 			return nil
 		} else {
 			// Set LSAT type Free if client does not support LSAT
