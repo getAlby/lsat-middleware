@@ -39,21 +39,16 @@ const SATS_PER_BTC = 100000000
 
 const MIN_SATS_TO_BE_PAID = 1
 
-func FiatToBTC(currency string, value float64) *http.Request {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://blockchain.info/tobtc?currency=%s&value=%f", currency, value), nil)
-	if err != nil {
-		return nil
-	}
-	return req
+type FiatRateConfig struct {
+	Currency string
+	Amount   float64
 }
 
-func AmountFunc(req *http.Request) (amount int64) {
+func (fr *FiatRateConfig) FiatToBTCAmountFunc(req *http.Request) (amount int64) {
 	if req == nil {
 		return MIN_SATS_TO_BE_PAID
 	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.Get(fmt.Sprintf("https://blockchain.info/tobtc?currency=%s&value=%f", fr.Currency, fr.Amount))
 	if err != nil {
 		return MIN_SATS_TO_BE_PAID
 	}
@@ -95,7 +90,11 @@ func main() {
 			Address: os.Getenv("LNURL_ADDRESS"),
 		},
 	}
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc)
+	fr := &FiatRateConfig{
+		Currency: "USD",
+		Amount:   0.01,
+	}
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	if err != nil {
 		log.Fatal(err)
 	}
