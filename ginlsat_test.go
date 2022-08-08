@@ -31,13 +31,16 @@ func FiatToBTC(currency string, value float64) *http.Request {
 	return req
 }
 
-func AmountFunc(req *http.Request) (amount int64) {
+type FiatRateConfig struct {
+	Currency string
+	Amount   float64
+}
+
+func (fr *FiatRateConfig) FiatToBTCAmountFunc(req *http.Request) (amount int64) {
 	if req == nil {
 		return MIN_SATS_TO_BE_PAID
 	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.Get(fmt.Sprintf("https://blockchain.info/tobtc?currency=%s&value=%f", fr.Currency, fr.Amount))
 	if err != nil {
 		return MIN_SATS_TO_BE_PAID
 	}
@@ -69,7 +72,6 @@ func ginLsatHandler(lsatmiddleware *ginlsat.GinLsatMiddleware) *gin.Engine {
 	router.Use(lsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
-		c.Request = FiatToBTC("USD", 0.01)
 		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
 		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
 			c.JSON(http.StatusAccepted, gin.H{
@@ -103,8 +105,12 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 		},
 	}
 	assert.NoError(t, err)
-
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc)
+	fr := &FiatRateConfig{
+		Currency: "USD",
+		Amount:   0.01,
+	}
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	assert.NoError(t, err)
 
 	handler := ginLsatHandler(lsatmiddleware)
 
@@ -163,8 +169,12 @@ func TestLsatWithLNDConfig(t *testing.T) {
 		},
 	}
 	assert.NoError(t, err)
-
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc)
+	fr := &FiatRateConfig{
+		Currency: "USD",
+		Amount:   0.01,
+	}
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	assert.NoError(t, err)
 
 	handler := ginLsatHandler(lsatmiddleware)
 
