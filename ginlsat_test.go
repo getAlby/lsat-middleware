@@ -69,6 +69,7 @@ func ginLsatHandler(lsatmiddleware *ginlsat.GinLsatMiddleware) *gin.Engine {
 	router.Use(lsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
+		c.Request = FiatToBTC("USD", 0.01)
 		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
 		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
 			c.JSON(http.StatusAccepted, gin.H{
@@ -103,8 +104,7 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 	}
 	assert.NoError(t, err)
 
-	req := FiatToBTC("USD", 0.01)
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc, req)
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc)
 
 	handler := ginLsatHandler(lsatmiddleware)
 
@@ -164,8 +164,7 @@ func TestLsatWithLNDConfig(t *testing.T) {
 	}
 	assert.NoError(t, err)
 
-	req := FiatToBTC("USD", 0.01)
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc, req)
+	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, AmountFunc)
 
 	handler := ginLsatHandler(lsatmiddleware)
 

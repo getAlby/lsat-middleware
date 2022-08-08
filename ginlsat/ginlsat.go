@@ -43,22 +43,19 @@ type LsatInfo struct {
 }
 
 type GinLsatMiddleware struct {
-	RequestForAmount *http.Request
-	AmountFunc       func(req *http.Request) (amount int64)
-	LNClient         ln.LNClient
+	AmountFunc func(req *http.Request) (amount int64)
+	LNClient   ln.LNClient
 }
 
 func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
-	amountFunc func(req *http.Request) (amount int64),
-	requestForAmount *http.Request) (*GinLsatMiddleware, error) {
+	amountFunc func(req *http.Request) (amount int64)) (*GinLsatMiddleware, error) {
 	lnClient, err := InitLnClient(lnClientConfig)
 	if err != nil {
 		return nil, err
 	}
 	middleware := &GinLsatMiddleware{
-		RequestForAmount: requestForAmount,
-		AmountFunc:       amountFunc,
-		LNClient:         lnClient,
+		AmountFunc: amountFunc,
+		LNClient:   lnClient,
 	}
 	return middleware, nil
 }
@@ -111,7 +108,7 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 		// Generate invoice and token
 		ctx := context.Background()
 		lnInvoice := lnrpc.Invoice{
-			Value: lsatmiddleware.AmountFunc(lsatmiddleware.RequestForAmount),
+			Value: lsatmiddleware.AmountFunc(c.Request),
 			Memo:  "LSAT",
 		}
 		LNClientConn := &ln.LNClientConn{
