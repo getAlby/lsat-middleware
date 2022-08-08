@@ -46,8 +46,8 @@ type DecodedPR struct {
 	MinFinalCLTVExpiry int    `json:"min_final_cltv_expiry"`
 }
 
-func (wrapper *LNURLoptions) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
-	username, domain, err := utils.ParseLnAddress(wrapper.Address)
+func NewLNURLClient(lnurlOptions LNURLoptions) (*LnAddressUrlResJson, error) {
+	username, domain, err := utils.ParseLnAddress(lnurlOptions.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -56,11 +56,14 @@ func (wrapper *LNURLoptions) AddInvoice(ctx context.Context, lnInvoice *lnrpc.In
 	if err != nil {
 		return nil, err
 	}
-	lnAddressUrlResJson := &LnAddressUrlResJson{}
-	if err := json.Unmarshal(lnAddressUrlResBody, lnAddressUrlResJson); err != nil {
+	lnAddressUrlRes := &LnAddressUrlResJson{}
+	if err := json.Unmarshal(lnAddressUrlResBody, lnAddressUrlRes); err != nil {
 		return nil, err
 	}
+	return lnAddressUrlRes, nil
+}
 
+func (lnAddressUrlResJson *LnAddressUrlResJson) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
 	callbackUrl := fmt.Sprintf("%s?amount=%d", lnAddressUrlResJson.Callback, MSAT_PER_SAT*lnInvoice.Value)
 	callbackUrlResBody, err := DoGetRequest(callbackUrl)
 	if err != nil {
