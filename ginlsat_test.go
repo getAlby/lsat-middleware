@@ -104,7 +104,6 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 			Address: os.Getenv("LNURL_ADDRESS"),
 		},
 	}
-	assert.NoError(t, err)
 	fr := &FiatRateConfig{
 		Currency: "USD",
 		Amount:   0.01,
@@ -168,7 +167,6 @@ func TestLsatWithLNDConfig(t *testing.T) {
 			MacaroonHex: os.Getenv("MACAROON_HEX"),
 		},
 	}
-	assert.NoError(t, err)
 	fr := &FiatRateConfig{
 		Currency: "USD",
 		Amount:   0.01,
