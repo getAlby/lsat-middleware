@@ -2,6 +2,7 @@ package ln
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
@@ -14,15 +15,15 @@ type LNClientConfig struct {
 	LNURLConfig  LNURLoptions
 }
 type LNClient interface {
-	AddInvoice(ctx context.Context, req *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error)
+	AddInvoice(ctx context.Context, lnReq *lnrpc.Invoice, httpReq *http.Request, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error)
 }
 
 type LNClientConn struct {
 	LNClient LNClient
 }
 
-func (lnClientConn *LNClientConn) GenerateInvoice(ctx context.Context, lnInvoice lnrpc.Invoice) (string, lntypes.Hash, error) {
-	lnClientInvoice, err := lnClientConn.LNClient.AddInvoice(ctx, &lnInvoice)
+func (lnClientConn *LNClientConn) GenerateInvoice(ctx context.Context, lnInvoice lnrpc.Invoice, httpReq *http.Request) (string, lntypes.Hash, error) {
+	lnClientInvoice, err := lnClientConn.LNClient.AddInvoice(ctx, &lnInvoice, httpReq)
 	if err != nil {
 		return "", lntypes.Hash{}, err
 	}

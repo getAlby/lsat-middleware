@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/macaroons"
@@ -90,6 +91,6 @@ func NewLNDclient(lndOptions LNDoptions) (result *LNDWrapper, err error) {
 	}, nil
 }
 
-func (wrapper *LNDWrapper) AddInvoice(ctx context.Context, req *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
+func (wrapper *LNDWrapper) AddInvoice(ctx context.Context, req *lnrpc.Invoice, httpReq *http.Request, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
 	return wrapper.client.AddInvoice(ctx, req, options...)
 }

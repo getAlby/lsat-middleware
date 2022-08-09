@@ -63,7 +63,7 @@ func NewLNURLClient(lnurlOptions LNURLoptions) (*LnAddressUrlResJson, error) {
 	return lnAddressUrlRes, nil
 }
 
-func (lnAddressUrlResJson *LnAddressUrlResJson) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
+func (lnAddressUrlResJson *LnAddressUrlResJson) AddInvoice(ctx context.Context, lnInvoice *lnrpc.Invoice, httpReq *http.Request, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
 	callbackUrl := fmt.Sprintf("%s?amount=%d", lnAddressUrlResJson.Callback, MSAT_PER_SAT*lnInvoice.Value)
 	callbackUrlResBody, err := DoGetRequest(callbackUrl)
 	if err != nil {
