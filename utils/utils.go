@@ -11,21 +11,25 @@ import (
 	"gopkg.in/macaroon.v2"
 )
 
-func ParseLsatHeader(authField []string) (*macaroon.Macaroon, lntypes.Preimage, error) {
+func ParseLsatHeader(authField string) (*macaroon.Macaroon, lntypes.Preimage, error) {
 	// A typical authField
 	// Authorization: LSAT AGIAJEemVQUTEyNCR0exk7ek90Cg==:1234abcd1234abcd1234abcd
 	if len(authField) == 0 {
 		return nil, lntypes.Preimage{}, fmt.Errorf("Authorization Field not present")
 	}
-	authFieldString := authField[0]
 	// Trim leading and trailing spaces
-	authFieldString = strings.TrimSpace(authFieldString)
-	if len(authFieldString) == 0 {
+	authField = strings.TrimSpace(authField)
+	if len(authField) == 0 {
 		return nil, lntypes.Preimage{}, fmt.Errorf("LSAT Header is not present")
 	}
-	token := strings.Split(authFieldString, " ")[1]
-	macaroonString := strings.TrimSpace(strings.Split(token, ":")[0])
-	preimageString := strings.TrimSpace(strings.Split(token, ":")[1])
+	// Trim LSAT prefix
+	token := strings.TrimPrefix(authField, "LSAT ")
+	splitted := strings.Split(token, ":")
+	if len(splitted) != 2 {
+		return nil, lntypes.Preimage{}, fmt.Errorf("LSAT does not have the right format: %s", authField)
+	}
+	macaroonString := strings.TrimSpace(splitted[0])
+	preimageString := strings.TrimSpace(splitted[1])
 
 	mac, err := GetMacaroonFromString(macaroonString)
 	if err != nil {
