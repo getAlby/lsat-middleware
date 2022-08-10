@@ -94,7 +94,7 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 	if err != nil {
 		// No Authorization present, check if client supports LSAT
 		acceptLsatField := c.Request.Header.Get("Accept")
-		if strings.Contains(acceptLsatField, "application/vnd.lsat.v1.full") {
+		if strings.Contains(acceptLsatField, LSAT_HEADER) {
 			lsatmiddleware.SetLSATHeader(c)
 			return
 		}
