@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/getAlby/gin-lsat/ln"
 	"github.com/getAlby/gin-lsat/lsat"
@@ -26,6 +27,7 @@ const (
 const (
 	LSAT_TYPE_FREE = "FREE"
 	LSAT_TYPE_PAID = "PAID"
+	LSAT_HEADER    = "application/vnd.lsat.v1.full"
 )
 
 const (
@@ -86,60 +88,68 @@ func InitLnClient(lnClientConfig *ln.LNClientConfig) (ln.LNClient, error) {
 }
 
 func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
-
-	acceptLsatField := c.Request.Header["Accept"]
-	// Check if client support LSAT
-
-	authField := c.Request.Header["Authorization"]
+	//First check for presence of authorization header
+	authField := c.Request.Header.Get("Authorization")
 	mac, preimage, err := utils.ParseLsatHeader(authField)
-
-	// If macaroon and preimage are valid
-	if err == nil {
-		rootKey := utils.GetRootKey()
-
-		// Check valid LSAT and set LSAT type Paid
-		err := lsat.VerifyLSAT(mac, rootKey[:], preimage)
-		if err != nil {
-			c.Set("LSAT", &LsatInfo{
-				Type: LSAT_TYPE_PAID,
-			})
-		}
-	} else if len(acceptLsatField) != 0 && acceptLsatField[0] == `application/vnd.lsat.v1.full+json` {
-		// Generate invoice and token
-		ctx := context.Background()
-		lnInvoice := lnrpc.Invoice{
-			Value: lsatmiddleware.AmountFunc(c.Request),
-			Memo:  "LSAT",
-		}
-		LNClientConn := &ln.LNClientConn{
-			LNClient: lsatmiddleware.LNClient,
-		}
-		invoice, paymentHash, err := LNClientConn.GenerateInvoice(ctx, lnInvoice, c.Request)
-		if err != nil {
-			c.Error(err)
-			c.Set("LSAT", &LsatInfo{
-				Error: err,
-			})
+	if err != nil {
+		// No Authorization present, check if client supports LSAT
+		acceptLsatField := c.Request.Header.Get("Accept")
+		if strings.Contains(acceptLsatField, "application/vnd.lsat.v1.full") {
+			lsatmiddleware.SetLSATHeader(c)
 			return
 		}
-		macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
-		if err != nil {
-			c.Error(err)
-			c.Set("LSAT", &LsatInfo{
-				Error: err,
-			})
-			return
-		}
-		c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%s, invoice=%s", macaroonString, invoice))
-		c.AbortWithStatusJSON(http.StatusPaymentRequired, gin.H{
-			"code":    http.StatusPaymentRequired,
-			"message": PAYMENT_REQUIRED_MESSAGE,
-		})
-	} else {
 		// Set LSAT type Free if client does not support LSAT
 		c.Set("LSAT", &LsatInfo{
 			Type: LSAT_TYPE_FREE,
 		})
+		return
 	}
+	//LSAT Header is present, verify it
+	err = lsat.VerifyLSAT(mac, utils.GetRootKey(), preimage)
+	if err != nil {
+		//not a valid LSAT
+		c.Error(err)
+		c.Set("LSAT", &LsatInfo{
+			Error: err,
+		})
+		return
+	}
+	//LSAT verification ok, mark client as having paid
+	c.Set("LSAT", &LsatInfo{
+		Type: LSAT_TYPE_PAID,
+	})
 
+}
+
+func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
+	// Generate invoice and token
+	ctx := context.Background()
+	lnInvoice := lnrpc.Invoice{
+		Value: lsatmiddleware.AmountFunc(c.Request),
+		Memo:  "LSAT",
+	}
+	LNClientConn := &ln.LNClientConn{
+		LNClient: lsatmiddleware.LNClient,
+	}
+	invoice, paymentHash, err := LNClientConn.GenerateInvoice(ctx, lnInvoice, c.Request)
+	if err != nil {
+		c.Error(err)
+		c.Set("LSAT", &LsatInfo{
+			Error: err,
+		})
+		return
+	}
+	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
+	if err != nil {
+		c.Error(err)
+		c.Set("LSAT", &LsatInfo{
+			Error: err,
+		})
+		return
+	}
+	c.Writer.Header().Set("WWW-Authenticate", fmt.Sprintf("LSAT macaroon=%s, invoice=%s", macaroonString, invoice))
+	c.AbortWithStatusJSON(http.StatusPaymentRequired, gin.H{
+		"code":    http.StatusPaymentRequired,
+		"message": PAYMENT_REQUIRED_MESSAGE,
+	})
 }
