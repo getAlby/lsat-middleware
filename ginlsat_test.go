@@ -11,6 +11,8 @@ import (
 
 	"github.com/getAlby/gin-lsat/ginlsat"
 	"github.com/getAlby/gin-lsat/ln"
+	macaroonutils "github.com/getAlby/gin-lsat/macaroon"
+	"github.com/getAlby/gin-lsat/utils"
 
 	"github.com/appleboy/gofight/v2"
 	"github.com/gin-gonic/gin"
@@ -84,7 +86,7 @@ func ginLsatHandler(lsatmiddleware *ginlsat.GinLsatMiddleware) *gin.Engine {
 				"message": ginlsat.PROTECTED_CONTENT_MESSAGE,
 			})
 		} else {
-			c.JSON(http.StatusAccepted, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),
 			})
@@ -147,13 +149,27 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON"), os.Getenv("TEST_PREIMAGE")),
+			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_VALID"), os.Getenv("TEST_PREIMAGE_VALID")),
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
 			assert.Equal(t, ginlsat.PROTECTED_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
+		})
+
+	router.GET("/protected").
+		SetHeader(gofight.H{
+			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_INVALID"), os.Getenv("TEST_PREIMAGE_INVALID")),
+		}).
+		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
+			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
+
+			macaroon, _ := utils.GetMacaroonFromString(os.Getenv("TEST_MACAROON_INVALID"))
+			macaroonId, _ := macaroonutils.GetPreimageFromMacaroon(macaroon)
+
+			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", os.Getenv("TEST_PREIMAGE_INVALID"), macaroonId.PaymentHash), message)
+			assert.Equal(t, http.StatusInternalServerError, res.Code)
 		})
 }
 func TestLsatWithLNDConfig(t *testing.T) {
@@ -210,12 +226,26 @@ func TestLsatWithLNDConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON"), os.Getenv("TEST_PREIMAGE")),
+			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_VALID"), os.Getenv("TEST_PREIMAGE_VALID")),
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
 			assert.Equal(t, ginlsat.PROTECTED_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
+		})
+
+	router.GET("/protected").
+		SetHeader(gofight.H{
+			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_INVALID"), os.Getenv("TEST_PREIMAGE_INVALID")),
+		}).
+		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
+			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
+
+			macaroon, _ := utils.GetMacaroonFromString(os.Getenv("TEST_MACAROON_INVALID"))
+			macaroonId, _ := macaroonutils.GetPreimageFromMacaroon(macaroon)
+
+			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", os.Getenv("TEST_PREIMAGE_INVALID"), macaroonId.PaymentHash), message)
+			assert.Equal(t, http.StatusInternalServerError, res.Code)
 		})
 }

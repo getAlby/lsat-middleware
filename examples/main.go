@@ -93,7 +93,7 @@ func main() {
 				"message": "Protected content",
 			})
 		} else {
-			c.JSON(http.StatusAccepted, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),
 			})
