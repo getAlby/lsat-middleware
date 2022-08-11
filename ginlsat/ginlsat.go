@@ -100,7 +100,6 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 	err = lsat.VerifyLSAT(mac, utils.GetRootKey(), preimage)
 	if err != nil {
 		//not a valid LSAT
-		c.Error(err)
 		c.Set("LSAT", &LsatInfo{
 			Error: err,
 		})
@@ -125,7 +124,6 @@ func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
 	}
 	invoice, paymentHash, err := LNClientConn.GenerateInvoice(ctx, lnInvoice, c.Request)
 	if err != nil {
-		c.Error(err)
 		c.Set("LSAT", &LsatInfo{
 			Error: err,
 		})
@@ -133,7 +131,6 @@ func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
 	}
 	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
 	if err != nil {
-		c.Error(err)
 		c.Set("LSAT", &LsatInfo{
 			Error: err,
 		})
