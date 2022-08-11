@@ -100,10 +100,16 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 	err := godotenv.Load(".env")
 	assert.NoError(t, err)
 
+	LNURL_ADDRESS := os.Getenv("LNURL_ADDRESS")
+	TEST_MACAROON_VALID := os.Getenv("TEST_MACAROON_VALID")
+	TEST_PREIMAGE_VALID := os.Getenv("TEST_PREIMAGE_VALID")
+	TEST_MACAROON_INVALID := os.Getenv("TEST_MACAROON_INVALID")
+	TEST_PREIMAGE_INVALID := os.Getenv("TEST_PREIMAGE_INVALID")
+
 	lnClientConfig := &ln.LNClientConfig{
 		LNClientType: "LNURL",
 		LNURLConfig: ln.LNURLoptions{
-			Address: os.Getenv("LNURL_ADDRESS"),
+			Address: LNURL_ADDRESS,
 		},
 	}
 	fr := &FiatRateConfig{
@@ -149,7 +155,7 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_VALID"), os.Getenv("TEST_PREIMAGE_VALID")),
+			"Authorization": fmt.Sprintf("LSAT %s:%s", TEST_MACAROON_VALID, TEST_PREIMAGE_VALID),
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
@@ -160,15 +166,15 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_INVALID"), os.Getenv("TEST_PREIMAGE_INVALID")),
+			"Authorization": fmt.Sprintf("LSAT %s:%s", TEST_MACAROON_INVALID, TEST_PREIMAGE_INVALID),
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			macaroon, _ := utils.GetMacaroonFromString(os.Getenv("TEST_MACAROON_INVALID"))
+			macaroon, _ := utils.GetMacaroonFromString(TEST_MACAROON_INVALID)
 			macaroonId, _ := macaroonutils.GetPreimageFromMacaroon(macaroon)
 
-			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", os.Getenv("TEST_PREIMAGE_INVALID"), macaroonId.PaymentHash), message)
+			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", TEST_PREIMAGE_INVALID, macaroonId.PaymentHash), message)
 			assert.Equal(t, http.StatusInternalServerError, res.Code)
 		})
 }
@@ -176,11 +182,18 @@ func TestLsatWithLNDConfig(t *testing.T) {
 	err := godotenv.Load(".env")
 	assert.NoError(t, err)
 
+	LND_ADDRESS := os.Getenv("LND_ADDRESS")
+	MACAROON_HEX := os.Getenv("MACAROON_HEX")
+	TEST_MACAROON_VALID := os.Getenv("TEST_MACAROON_VALID")
+	TEST_PREIMAGE_VALID := os.Getenv("TEST_PREIMAGE_VALID")
+	TEST_MACAROON_INVALID := os.Getenv("TEST_MACAROON_INVALID")
+	TEST_PREIMAGE_INVALID := os.Getenv("TEST_PREIMAGE_INVALID")
+
 	lnClientConfig := &ln.LNClientConfig{
 		LNClientType: "LND",
 		LNDConfig: ln.LNDoptions{
-			Address:     os.Getenv("LND_ADDRESS"),
-			MacaroonHex: os.Getenv("MACAROON_HEX"),
+			Address:     LND_ADDRESS,
+			MacaroonHex: MACAROON_HEX,
 		},
 	}
 	fr := &FiatRateConfig{
@@ -226,7 +239,7 @@ func TestLsatWithLNDConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_VALID"), os.Getenv("TEST_PREIMAGE_VALID")),
+			"Authorization": fmt.Sprintf("LSAT %s:%s", TEST_MACAROON_VALID, TEST_PREIMAGE_VALID),
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
@@ -237,15 +250,15 @@ func TestLsatWithLNDConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Authorization": fmt.Sprintf("LSAT %s:%s", os.Getenv("TEST_MACAROON_INVALID"), os.Getenv("TEST_PREIMAGE_INVALID")),
+			"Authorization": fmt.Sprintf("LSAT %s:%s", TEST_MACAROON_INVALID, TEST_PREIMAGE_INVALID),
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			macaroon, _ := utils.GetMacaroonFromString(os.Getenv("TEST_MACAROON_INVALID"))
+			macaroon, _ := utils.GetMacaroonFromString(TEST_MACAROON_INVALID)
 			macaroonId, _ := macaroonutils.GetPreimageFromMacaroon(macaroon)
 
-			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", os.Getenv("TEST_PREIMAGE_INVALID"), macaroonId.PaymentHash), message)
+			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", TEST_PREIMAGE_INVALID, macaroonId.PaymentHash), message)
 			assert.Equal(t, http.StatusInternalServerError, res.Code)
 		})
 }
