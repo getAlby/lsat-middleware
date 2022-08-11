@@ -2,7 +2,6 @@ package ginlsat
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/getAlby/gin-lsat/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
 )
@@ -62,13 +60,7 @@ func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
 	return middleware, nil
 }
 
-func InitLnClient(lnClientConfig *ln.LNClientConfig) (ln.LNClient, error) {
-	var lnClient ln.LNClient
-	err := godotenv.Load(".env")
-	if err != nil {
-		return lnClient, errors.New("Failed to load .env file")
-	}
-
+func InitLnClient(lnClientConfig *ln.LNClientConfig) (lnClient ln.LNClient, err error) {
 	switch lnClientConfig.LNClientType {
 	case LND_CLIENT_TYPE:
 		lnClient, err = ln.NewLNDclient(lnClientConfig.LNDConfig)
