@@ -115,7 +115,7 @@ func (lsatmiddleware *EchoLsatMiddleware) Handler(next echo.HandlerFunc) echo.Ha
 			LNClientConn := &ln.LNClientConn{
 				LNClient: lsatmiddleware.LNClient,
 			}
-			invoice, paymentHash, err := LNClientConn.GenerateInvoice(ctx, lnInvoice)
+			invoice, paymentHash, err := LNClientConn.GenerateInvoice(ctx, lnInvoice, c.Echo().AcquireContext().Request())
 			if err != nil {
 				c.Error(err)
 				c.Set("LSAT", &LsatInfo{
