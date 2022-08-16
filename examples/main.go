@@ -92,7 +92,7 @@ func main() {
 				"code":    http.StatusAccepted,
 				"message": "Protected content",
 			})
-		} else {
+		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_ERROR {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),
