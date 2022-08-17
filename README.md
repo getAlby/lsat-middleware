@@ -102,7 +102,6 @@ func main() {
 	router.Use(lsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
-		c.Request = FiatToBTC("USD", 0.01)
 		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
 		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
 			c.JSON(http.StatusAccepted, gin.H{
@@ -114,8 +113,8 @@ func main() {
 				"code":    http.StatusAccepted,
 				"message": "Protected content",
 			})
-		} else {
-			c.JSON(http.StatusAccepted, gin.H{
+		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_ERROR {
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),
 			})

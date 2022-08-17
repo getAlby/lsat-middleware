@@ -1,8 +1,6 @@
 package lsat
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
 
 	macaroonutils "github.com/getAlby/gin-lsat/macaroon"
@@ -16,9 +14,8 @@ func VerifyLSAT(mac *macaroon.Macaroon, rootKey []byte, preimage lntypes.Preimag
 	if err != nil {
 		return err
 	}
-	dec := gob.NewDecoder(bytes.NewBuffer(mac.Id()))
-	macaroonId := &macaroonutils.MacaroonIdentifier{}
-	if err = dec.Decode(macaroonId); err != nil {
+	macaroonId, err := macaroonutils.GetPreimageFromMacaroon(mac)
+	if err != nil {
 		return err
 	}
 	if macaroonId.PaymentHash != preimage.Hash() {

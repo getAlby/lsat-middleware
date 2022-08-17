@@ -68,6 +68,16 @@ func generateMacaroonIdentifier(paymentHash lntypes.Hash) ([]byte, error) {
 	return identifier.Bytes(), err
 }
 
+func GetPreimageFromMacaroon(mac *macaroon.Macaroon) (*MacaroonIdentifier, error) {
+	dec := gob.NewDecoder(bytes.NewBuffer(mac.Id()))
+	macaroonId := &MacaroonIdentifier{}
+	err := dec.Decode(macaroonId)
+	if err != nil {
+		return nil, err
+	}
+	return macaroonId, nil
+}
+
 func generateTokenId() ([32]byte, error) {
 	var tokenId [32]byte
 	_, err := rand.Read(tokenId[:])
