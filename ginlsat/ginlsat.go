@@ -23,10 +23,11 @@ const (
 )
 
 const (
-	LSAT_TYPE_FREE  = "FREE"
-	LSAT_TYPE_PAID  = "PAID"
-	LSAT_TYPE_ERROR = "ERROR"
-	LSAT_HEADER     = "application/vnd.lsat.v1.full"
+	LSAT_TYPE_FREE   = "FREE"
+	LSAT_TYPE_PAID   = "PAID"
+	LSAT_TYPE_ERROR  = "ERROR"
+	LSAT_HEADER      = "LSAT"
+	LSAT_HEADER_NAME = "Accept-Authenticate"
 )
 
 const (
@@ -86,7 +87,7 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 	mac, preimage, err := utils.ParseLsatHeader(authField)
 	if err != nil {
 		// No Authorization present, check if client supports LSAT
-		acceptLsatField := c.Request.Header.Get("Accept")
+		acceptLsatField := c.Request.Header.Get(LSAT_HEADER_NAME)
 		if strings.Contains(acceptLsatField, LSAT_HEADER) {
 			lsatmiddleware.SetLSATHeader(c)
 			return
