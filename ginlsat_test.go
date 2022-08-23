@@ -145,7 +145,7 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Accept": "application/vnd.lsat.v1.full+json",
+			ginlsat.LSAT_HEADER_NAME: ginlsat.LSAT_HEADER,
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
@@ -225,7 +225,7 @@ func TestLsatWithLNDConfig(t *testing.T) {
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			"Accept": "application/vnd.lsat.v1.full+json",
+			ginlsat.LSAT_HEADER_NAME: ginlsat.LSAT_HEADER,
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
