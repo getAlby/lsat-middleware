@@ -23,9 +23,10 @@ const (
 )
 
 const (
-	LSAT_TYPE_FREE = "FREE"
-	LSAT_TYPE_PAID = "PAID"
-	LSAT_HEADER    = "application/vnd.lsat.v1.full"
+	LSAT_TYPE_FREE  = "FREE"
+	LSAT_TYPE_PAID  = "PAID"
+	LSAT_TYPE_ERROR = "ERROR"
+	LSAT_HEADER     = "application/vnd.lsat.v1.full"
 )
 
 const (
@@ -95,16 +96,17 @@ func (lsatmiddleware *EchoLsatMiddleware) Handler(next echo.HandlerFunc) echo.Ha
 			c.Set("LSAT", &LsatInfo{
 				Type: LSAT_TYPE_FREE,
 			})
-			return nil
+			return next(c)
 		}
 		//LSAT Header is present, verify it
 		err = lsat.VerifyLSAT(mac, utils.GetRootKey(), preimage)
 		if err != nil {
 			//not a valid LSAT
 			c.Set("LSAT", &LsatInfo{
+				Type:  LSAT_TYPE_ERROR,
 				Error: err,
 			})
-			return nil
+			return next(c)
 		}
 		//LSAT verification ok, mark client as having paid
 		c.Set("LSAT", &LsatInfo{
@@ -127,6 +129,7 @@ func (lsatmiddleware *EchoLsatMiddleware) SetLSATHeader(c echo.Context) {
 	invoice, paymentHash, err := LNClientConn.GenerateInvoice(ctx, lnInvoice, c.Echo().AcquireContext().Request())
 	if err != nil {
 		c.Set("LSAT", &LsatInfo{
+			Type:  LSAT_TYPE_ERROR,
 			Error: err,
 		})
 		return
@@ -134,6 +137,7 @@ func (lsatmiddleware *EchoLsatMiddleware) SetLSATHeader(c echo.Context) {
 	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
 	if err != nil {
 		c.Set("LSAT", &LsatInfo{
+			Type:  LSAT_TYPE_ERROR,
 			Error: err,
 		})
 		return
