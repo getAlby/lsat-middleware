@@ -39,7 +39,6 @@ const (
 type LsatInfo struct {
 	Type        string
 	Preimage    lntypes.Preimage
-	Mac         *macaroon.MacaroonIdentifier
 	PaymentHash lntypes.Hash
 	Amount      int64
 	Error       error
