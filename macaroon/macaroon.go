@@ -68,7 +68,7 @@ func generateMacaroonIdentifier(paymentHash lntypes.Hash) ([]byte, error) {
 	return identifier.Bytes(), err
 }
 
-func GetPreimageFromMacaroon(mac *macaroon.Macaroon) (*MacaroonIdentifier, error) {
+func GetMacIdFromMacaroon(mac *macaroon.Macaroon) (*MacaroonIdentifier, error) {
 	dec := gob.NewDecoder(bytes.NewBuffer(mac.Id()))
 	macaroonId := &MacaroonIdentifier{}
 	err := dec.Decode(macaroonId)

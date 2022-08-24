@@ -14,7 +14,7 @@ func VerifyLSAT(mac *macaroon.Macaroon, rootKey []byte, preimage lntypes.Preimag
 	if err != nil {
 		return err
 	}
-	macaroonId, err := macaroonutils.GetPreimageFromMacaroon(mac)
+	macaroonId, err := macaroonutils.GetMacIdFromMacaroon(mac)
 	if err != nil {
 		return err
 	}
