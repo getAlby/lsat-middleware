@@ -8,10 +8,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/getAlby/lsat-middleware/ginlsat"
+	"github.com/getAlby/lsat-middleware/echolsat"
 	"github.com/getAlby/lsat-middleware/ln"
-	"github.com/gin-gonic/gin"
+
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
 )
 
 const SATS_PER_BTC = 100000000
@@ -46,16 +47,16 @@ func (fr *FiatRateConfig) FiatToBTCAmountFunc(req *http.Request) (amount int64) 
 }
 
 func main() {
-	router := gin.Default()
+	router := echo.New()
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusAccepted, gin.H{
+	router.GET("/", func(c echo.Context) error {
+		return c.JSON(http.StatusAccepted, map[string]interface{}{
 			"code":    http.StatusAccepted,
 			"message": "Free content",
 		})
 	})
 
-	err := godotenv.Load(".env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Fatal("Failed to load .env file")
 	}
@@ -73,32 +74,35 @@ func main() {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := echolsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	router.Use(lsatmiddleware.Handler)
 
-	router.GET("/protected", func(c *gin.Context) {
-		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
-		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
-			c.JSON(http.StatusAccepted, gin.H{
+	router.GET("/protected", func(c echo.Context) error {
+		lsatInfo := c.Get("LSAT").(*echolsat.LsatInfo)
+		if lsatInfo.Type == echolsat.LSAT_TYPE_FREE {
+			return c.JSON(http.StatusAccepted, map[string]interface{}{
 				"code":    http.StatusAccepted,
 				"message": "Free content",
 			})
-		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_PAID {
-			c.JSON(http.StatusAccepted, gin.H{
+		}
+		if lsatInfo.Type == echolsat.LSAT_TYPE_PAID {
+			return c.JSON(http.StatusAccepted, map[string]interface{}{
 				"code":    http.StatusAccepted,
 				"message": "Protected content",
 			})
-		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_ERROR {
-			c.JSON(http.StatusInternalServerError, gin.H{
+		}
+		if lsatInfo.Type == echolsat.LSAT_TYPE_ERROR {
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),
 			})
 		}
+		return nil
 	})
 
-	router.Run("localhost:8080")
+	router.Start("localhost:8080")
 }
