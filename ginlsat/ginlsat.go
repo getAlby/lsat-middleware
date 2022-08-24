@@ -37,11 +37,11 @@ const (
 )
 
 type LsatInfo struct {
-	Type     string
-	Preimage lntypes.Preimage
-	Mac      *macaroon.MacaroonIdentifier
-	Amount   int64
-	Error    error
+	Type        string
+	Preimage    lntypes.Preimage
+	PaymentHash lntypes.Hash
+	Amount      int64
+	Error       error
 }
 
 type GinLsatMiddleware struct {
@@ -109,8 +109,11 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 		return
 	}
 	//LSAT verification ok, mark client as having paid
+	macaroonId, err := macaroonutils.GetMacIdFromMacaroon(mac)
 	c.Set("LSAT", &LsatInfo{
-		Type: LSAT_TYPE_PAID,
+		Type:        LSAT_TYPE_PAID,
+		Preimage:    preimage,
+		PaymentHash: macaroonId.PaymentHash,
 	})
 
 }
