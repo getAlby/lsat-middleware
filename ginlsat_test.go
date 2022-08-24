@@ -176,7 +176,7 @@ func TestLsatWithLNURLConfig(t *testing.T) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
 			macaroon, _ := utils.GetMacaroonFromString(TEST_MACAROON_INVALID)
-			macaroonId, _ := macaroonutils.GetPreimageFromMacaroon(macaroon)
+			macaroonId, _ := macaroonutils.GetMacIdFromMacaroon(macaroon)
 
 			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", TEST_PREIMAGE_INVALID, macaroonId.PaymentHash), message)
 			assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -256,7 +256,7 @@ func TestLsatWithLNDConfig(t *testing.T) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
 			macaroon, _ := utils.GetMacaroonFromString(TEST_MACAROON_INVALID)
-			macaroonId, _ := macaroonutils.GetPreimageFromMacaroon(macaroon)
+			macaroonId, _ := macaroonutils.GetMacIdFromMacaroon(macaroon)
 
 			assert.Equal(t, fmt.Sprintf("Invalid Preimage %s for PaymentHash %s", TEST_PREIMAGE_INVALID, macaroonId.PaymentHash), message)
 			assert.Equal(t, http.StatusInternalServerError, res.Code)
