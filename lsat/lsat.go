@@ -3,7 +3,7 @@ package lsat
 import (
 	"fmt"
 
-	macaroonutils "github.com/getAlby/gin-lsat/macaroon"
+	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
 
 	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"

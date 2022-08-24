@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/getAlby/gin-lsat/ln"
-	"github.com/getAlby/gin-lsat/lsat"
-	macaroonutils "github.com/getAlby/gin-lsat/macaroon"
-	"github.com/getAlby/gin-lsat/utils"
+	"github.com/getAlby/lsat-middleware/ln"
+	"github.com/getAlby/lsat-middleware/lsat"
+	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
+	"github.com/getAlby/lsat-middleware/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lightningnetwork/lnd/lnrpc"
