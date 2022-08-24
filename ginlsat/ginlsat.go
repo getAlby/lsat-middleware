@@ -8,7 +8,6 @@ import (
 
 	"github.com/getAlby/gin-lsat/ln"
 	"github.com/getAlby/gin-lsat/lsat"
-	"github.com/getAlby/gin-lsat/macaroon"
 	macaroonutils "github.com/getAlby/gin-lsat/macaroon"
 	"github.com/getAlby/gin-lsat/utils"
 
