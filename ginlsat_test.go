@@ -66,6 +66,7 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 		LNURLConfig: ln.LNURLoptions{
 			Address: LNURL_ADDRESS,
 		},
+		RootKey: []byte(ROOT_KEY),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
@@ -147,6 +148,7 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 			Address:     LND_ADDRESS,
 			MacaroonHex: MACAROON_HEX,
 		},
+		RootKey: []byte(ROOT_KEY),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",

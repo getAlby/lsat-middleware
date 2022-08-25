@@ -13,6 +13,7 @@ type LNClientConfig struct {
 	LNClientType string
 	LNDConfig    LNDoptions
 	LNURLConfig  LNURLoptions
+	RootKey      []byte
 }
 type LNClient interface {
 	AddInvoice(ctx context.Context, lnReq *lnrpc.Invoice, httpReq *http.Request, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error)
