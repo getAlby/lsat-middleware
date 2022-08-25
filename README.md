@@ -8,7 +8,7 @@ The middleware:-
 2. Verify the LSAT before serving paid content.
 3. Send macaroon and invoice if the user prefers paid content and fails to present a valid LSAT.
 
-<img src="https://user-images.githubusercontent.com/44242169/186485336-83b0dc68-aae5-4bdc-aee5-33046b9204c7.png" width="700">
+<img src="https://user-images.githubusercontent.com/44242169/186736015-f956dfe1-cba0-4dc3-9755-9d22cb1c7e77.jpg" width="700">
 
 
 ## Installation
