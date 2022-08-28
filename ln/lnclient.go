@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
 	"google.golang.org/grpc"
@@ -13,6 +14,7 @@ type LNClientConfig struct {
 	LNClientType string
 	LNDConfig    LNDoptions
 	LNURLConfig  LNURLoptions
+	Caveats      []caveat.Caveat
 }
 type LNClient interface {
 	AddInvoice(ctx context.Context, lnReq *lnrpc.Invoice, httpReq *http.Request, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error)

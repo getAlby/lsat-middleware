@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
 	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
@@ -46,6 +47,7 @@ type LsatInfo struct {
 type GinLsatMiddleware struct {
 	AmountFunc func(req *http.Request) (amount int64)
 	LNClient   ln.LNClient
+	Caveats    []caveat.Caveat
 }
 
 func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
@@ -57,6 +59,7 @@ func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
 	middleware := &GinLsatMiddleware{
 		AmountFunc: amountFunc,
 		LNClient:   lnClient,
+		Caveats:    lnClientConfig.Caveats,
 	}
 	return middleware, nil
 }
@@ -135,7 +138,7 @@ func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
 		})
 		return
 	}
-	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash)
+	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, lsatmiddleware.Caveats)
 	if err != nil {
 		c.Set("LSAT", &LsatInfo{
 			Type:  LSAT_TYPE_ERROR,

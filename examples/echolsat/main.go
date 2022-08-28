@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/echolsat"
 	"github.com/getAlby/lsat-middleware/ln"
 
@@ -18,6 +19,8 @@ import (
 const SATS_PER_BTC = 100000000
 
 const MIN_SATS_TO_BE_PAID = 1
+
+const Path = "Path"
 
 type FiatRateConfig struct {
 	Currency string
@@ -68,6 +71,13 @@ func main() {
 		},
 		LNURLConfig: ln.LNURLoptions{
 			Address: os.Getenv("LNURL_ADDRESS"),
+		},
+		Caveats: []caveat.Caveat{
+			{
+				Condition: Path,
+				Value:     os.Getenv("PATH"),
+			},
+			// More caveats can be  added here
 		},
 	}
 	fr := &FiatRateConfig{
