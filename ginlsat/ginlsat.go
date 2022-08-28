@@ -101,7 +101,7 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 		return
 	}
 	//LSAT Header is present, verify it
-	err = lsat.VerifyLSAT(mac, utils.GetRootKey(), preimage)
+	err = lsat.VerifyLSAT(mac, utils.GetRootKey(), lsatmiddleware.Caveats, preimage)
 	if err != nil {
 		//not a valid LSAT
 		c.Set("LSAT", &LsatInfo{

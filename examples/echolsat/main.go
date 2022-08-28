@@ -77,7 +77,7 @@ func main() {
 				Condition: Path,
 				Value:     os.Getenv("PATH"),
 			},
-			// More caveats can be  added here
+			// More caveats can be added here
 		},
 	}
 	fr := &FiatRateConfig{
