@@ -44,22 +44,27 @@ func VerifyCaveats(rawCaveats []string, conditions []Caveat) error {
 		}
 		caveats = append(caveats, caveat)
 	}
-	if !CheckCaveatsArrayUnorderedEqual(caveats, conditions) {
+	if !CheckIfConditionsMatchCaveats(caveats, conditions) {
 		return fmt.Errorf("Caveats does not match")
 	}
 	return nil
 }
 
-func CheckCaveatsArrayUnorderedEqual(caveats []Caveat, conditions []Caveat) bool {
-	conditionsExist := make(map[string]Caveat, len(conditions))
-	for _, condition := range conditions {
-		conditionsExist[condition.Condition] = condition
+func CheckIfConditionsMatchCaveats(caveats []Caveat, conditions []Caveat) bool {
+	// A macaroon can have more caveats (Third-party as well) than expected conditions
+	// but atleast should contain caveats for required conditions
+	if len(caveats) < len(conditions) {
+		return false
 	}
+	caveatsExist := make(map[string]Caveat, len(caveats))
 	for _, caveat := range caveats {
-		if _, ok := conditionsExist[caveat.Condition]; !ok {
+		caveatsExist[caveat.Condition] = caveat
+	}
+	for _, condition := range conditions {
+		if _, ok := caveatsExist[condition.Condition]; !ok {
 			return false
 		}
-		if conditionsExist[caveat.Condition].Value != caveat.Value {
+		if caveatsExist[condition.Condition].Value != condition.Value {
 			return false
 		}
 	}
