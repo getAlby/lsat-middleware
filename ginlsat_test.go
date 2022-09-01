@@ -10,6 +10,7 @@ import (
 	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/ginlsat"
 	"github.com/getAlby/lsat-middleware/ln"
+	"github.com/getAlby/lsat-middleware/lsat"
 	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
 	"github.com/getAlby/lsat-middleware/utils"
 
@@ -27,23 +28,23 @@ func ginLsatHandler(lsatmiddleware *ginlsat.GinLsatMiddleware) *gin.Engine {
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusAccepted, gin.H{
 			"code":    http.StatusAccepted,
-			"message": ginlsat.FREE_CONTENT_MESSAGE,
+			"message": lsat.FREE_CONTENT_MESSAGE,
 		})
 	})
 
 	router.Use(lsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
-		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
-		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
+		lsatInfo := c.Value("LSAT").(*lsat.LsatInfo)
+		if lsatInfo.Type == lsat.LSAT_TYPE_FREE {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
-				"message": ginlsat.FREE_CONTENT_MESSAGE,
+				"message": lsat.FREE_CONTENT_MESSAGE,
 			})
-		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_PAID {
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_PAID {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
-				"message": ginlsat.PROTECTED_CONTENT_MESSAGE,
+				"message": lsat.PROTECTED_CONTENT_MESSAGE,
 			})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -90,7 +91,7 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
@@ -98,18 +99,18 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			ginlsat.LSAT_HEADER_NAME: ginlsat.LSAT_HEADER,
+			lsat.LSAT_HEADER_NAME: lsat.LSAT_HEADER,
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.PAYMENT_REQUIRED_MESSAGE, message)
+			assert.Equal(t, lsat.PAYMENT_REQUIRED_MESSAGE, message)
 			assert.Equal(t, http.StatusPaymentRequired, res.Code)
 
 			assert.True(t, strings.HasPrefix(res.HeaderMap.Get("Www-Authenticate"), "LSAT macaroon="))
@@ -123,7 +124,7 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.PROTECTED_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.PROTECTED_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
@@ -189,7 +190,7 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
@@ -197,18 +198,18 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			ginlsat.LSAT_HEADER_NAME: ginlsat.LSAT_HEADER,
+			lsat.LSAT_HEADER_NAME: lsat.LSAT_HEADER,
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.PAYMENT_REQUIRED_MESSAGE, message)
+			assert.Equal(t, lsat.PAYMENT_REQUIRED_MESSAGE, message)
 			assert.Equal(t, http.StatusPaymentRequired, res.Code)
 
 			assert.True(t, strings.HasPrefix(res.HeaderMap.Get("Www-Authenticate"), "LSAT macaroon="))
@@ -222,7 +223,7 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, ginlsat.PROTECTED_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.PROTECTED_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 

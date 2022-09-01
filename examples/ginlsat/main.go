@@ -11,6 +11,8 @@ import (
 	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/ginlsat"
 	"github.com/getAlby/lsat-middleware/ln"
+	"github.com/getAlby/lsat-middleware/lsat"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -92,18 +94,18 @@ func main() {
 	router.Use(lsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
-		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
-		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
+		lsatInfo := c.Value("LSAT").(*lsat.LsatInfo)
+		if lsatInfo.Type == lsat.LSAT_TYPE_FREE {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
 				"message": "Free content",
 			})
-		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_PAID {
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_PAID {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
 				"message": "Protected content",
 			})
-		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_ERROR {
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_ERROR {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),

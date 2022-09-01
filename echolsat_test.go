@@ -10,6 +10,7 @@ import (
 	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/echolsat"
 	"github.com/getAlby/lsat-middleware/ln"
+	"github.com/getAlby/lsat-middleware/lsat"
 	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
 	"github.com/getAlby/lsat-middleware/utils"
 
@@ -27,27 +28,27 @@ func echoLsatHandler(lsatmiddleware *echolsat.EchoLsatMiddleware) *echo.Echo {
 	router.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusAccepted, map[string]interface{}{
 			"code":    http.StatusAccepted,
-			"message": echolsat.FREE_CONTENT_MESSAGE,
+			"message": lsat.FREE_CONTENT_MESSAGE,
 		})
 	})
 
 	router.Use(lsatmiddleware.Handler)
 
 	router.GET("/protected", func(c echo.Context) error {
-		lsatInfo := c.Get("LSAT").(*echolsat.LsatInfo)
-		if lsatInfo.Type == echolsat.LSAT_TYPE_FREE {
+		lsatInfo := c.Get("LSAT").(*lsat.LsatInfo)
+		if lsatInfo.Type == lsat.LSAT_TYPE_FREE {
 			return c.JSON(http.StatusAccepted, map[string]interface{}{
 				"code":    http.StatusAccepted,
-				"message": echolsat.FREE_CONTENT_MESSAGE,
+				"message": lsat.FREE_CONTENT_MESSAGE,
 			})
 		}
-		if lsatInfo.Type == echolsat.LSAT_TYPE_PAID {
+		if lsatInfo.Type == lsat.LSAT_TYPE_PAID {
 			return c.JSON(http.StatusAccepted, map[string]interface{}{
 				"code":    http.StatusAccepted,
-				"message": echolsat.PROTECTED_CONTENT_MESSAGE,
+				"message": lsat.PROTECTED_CONTENT_MESSAGE,
 			})
 		}
-		if lsatInfo.Type == echolsat.LSAT_TYPE_ERROR {
+		if lsatInfo.Type == lsat.LSAT_TYPE_ERROR {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),
@@ -94,7 +95,7 @@ func TestEchoLsatWithLNURLConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
@@ -102,18 +103,18 @@ func TestEchoLsatWithLNURLConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			echolsat.LSAT_HEADER_NAME: echolsat.LSAT_HEADER,
+			lsat.LSAT_HEADER_NAME: lsat.LSAT_HEADER,
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.PAYMENT_REQUIRED_MESSAGE, message)
+			assert.Equal(t, lsat.PAYMENT_REQUIRED_MESSAGE, message)
 			assert.Equal(t, http.StatusPaymentRequired, res.Code)
 
 			assert.True(t, strings.HasPrefix(res.HeaderMap.Get("Www-Authenticate"), "LSAT macaroon="))
@@ -127,7 +128,7 @@ func TestEchoLsatWithLNURLConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.PROTECTED_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.PROTECTED_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
@@ -195,7 +196,7 @@ func TestEchoLsatWithLNDConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
@@ -203,18 +204,18 @@ func TestEchoLsatWithLNDConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.FREE_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.FREE_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
 	router.GET("/protected").
 		SetHeader(gofight.H{
-			echolsat.LSAT_HEADER_NAME: echolsat.LSAT_HEADER,
+			lsat.LSAT_HEADER_NAME: lsat.LSAT_HEADER,
 		}).
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.PAYMENT_REQUIRED_MESSAGE, message)
+			assert.Equal(t, lsat.PAYMENT_REQUIRED_MESSAGE, message)
 			assert.Equal(t, http.StatusPaymentRequired, res.Code)
 
 			assert.True(t, strings.HasPrefix(res.HeaderMap.Get("Www-Authenticate"), "LSAT macaroon="))
@@ -228,7 +229,7 @@ func TestEchoLsatWithLNDConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, echolsat.PROTECTED_CONTENT_MESSAGE, message)
+			assert.Equal(t, lsat.PROTECTED_CONTENT_MESSAGE, message)
 			assert.Equal(t, http.StatusAccepted, res.Code)
 		})
 
