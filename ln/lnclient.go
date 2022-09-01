@@ -15,6 +15,7 @@ type LNClientConfig struct {
 	LNDConfig    LNDoptions
 	LNURLConfig  LNURLoptions
 	Caveats      []caveat.Caveat
+	RootKey      []byte
 }
 type LNClient interface {
 	AddInvoice(ctx context.Context, lnReq *lnrpc.Invoice, httpReq *http.Request, options ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error)

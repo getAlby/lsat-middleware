@@ -48,6 +48,7 @@ type GinLsatMiddleware struct {
 	AmountFunc func(req *http.Request) (amount int64)
 	LNClient   ln.LNClient
 	Caveats    []caveat.Caveat
+	RootKey    []byte
 }
 
 func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
@@ -60,6 +61,7 @@ func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
 		AmountFunc: amountFunc,
 		LNClient:   lnClient,
 		Caveats:    lnClientConfig.Caveats,
+		RootKey:    lnClientConfig.RootKey,
 	}
 	return middleware, nil
 }
@@ -101,7 +103,7 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 		return
 	}
 	//LSAT Header is present, verify it
-	err = lsat.VerifyLSAT(mac, utils.GetRootKey(), lsatmiddleware.Caveats, preimage)
+	err = lsat.VerifyLSAT(mac, lsatmiddleware.Caveats, lsatmiddleware.RootKey, preimage)
 	if err != nil {
 		//not a valid LSAT
 		c.Set("LSAT", &LsatInfo{
@@ -138,7 +140,7 @@ func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
 		})
 		return
 	}
-	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, lsatmiddleware.Caveats)
+	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, lsatmiddleware.Caveats, lsatmiddleware.RootKey)
 	if err != nil {
 		c.Set("LSAT", &LsatInfo{
 			Type:  LSAT_TYPE_ERROR,

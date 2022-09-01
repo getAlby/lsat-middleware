@@ -79,6 +79,7 @@ func main() {
 			},
 			// More caveats can be added here
 		},
+		RootKey: []byte(os.Getenv("ROOT_KEY")),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",

@@ -10,7 +10,7 @@ import (
 	"gopkg.in/macaroon.v2"
 )
 
-func VerifyLSAT(mac *macaroon.Macaroon, rootKey []byte, conditions []caveat.Caveat, preimage lntypes.Preimage) error {
+func VerifyLSAT(mac *macaroon.Macaroon, conditions []caveat.Caveat, rootKey []byte, preimage lntypes.Preimage) error {
 	rawCaveats, err := mac.VerifySignature(rootKey, nil)
 	if err != nil {
 		return err

@@ -73,6 +73,7 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 				Value:     os.Getenv("PATH"),
 			},
 		},
+		RootKey: []byte(ROOT_KEY),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
@@ -171,6 +172,7 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 				Value:     os.Getenv("PATH"),
 			},
 		},
+		RootKey: []byte(ROOT_KEY),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
