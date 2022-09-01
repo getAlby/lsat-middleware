@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 
-	"github.com/getAlby/lsat-middleware/utils"
 	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"
 )
@@ -17,12 +16,11 @@ type MacaroonIdentifier struct {
 	TokenId     [32]byte
 }
 
-func GetMacaroonAsString(paymentHash lntypes.Hash) (string, error) {
+func GetMacaroonAsString(paymentHash lntypes.Hash, rootKey []byte) (string, error) {
 	// rootKey, err := generateRootKey()
 	// if err != nil {
 	// 	return "", err
 	// }
-	rootKey := utils.GetRootKey()
 
 	identifier, err := generateMacaroonIdentifier(paymentHash)
 	if err != nil {
@@ -82,10 +80,4 @@ func generateTokenId() ([32]byte, error) {
 	var tokenId [32]byte
 	_, err := rand.Read(tokenId[:])
 	return tokenId, err
-}
-
-func generateRootKey() ([32]byte, error) {
-	var rootKey [32]byte
-	_, err := rand.Read(rootKey[:])
-	return rootKey, err
 }

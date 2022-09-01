@@ -68,6 +68,7 @@ func main() {
 		LNURLConfig: ln.LNURLoptions{
 			Address: os.Getenv("LNURL_ADDRESS"),
 		},
+		RootKey: []byte(os.Getenv("ROOT_KEY")),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
