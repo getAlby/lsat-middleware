@@ -16,6 +16,8 @@ import (
 	"github.com/lightningnetwork/lnd/lnrpc"
 )
 
+const REQUEST_PATH = "RequestPath"
+
 type GinLsatMiddleware struct {
 	AmountFunc func(req *http.Request) (amount int64)
 	LNClient   ln.LNClient
@@ -55,8 +57,11 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 		})
 		return
 	}
+	requestPath := c.Request.URL.Path
+	requestPathCaveat := caveat.NewCaveat(REQUEST_PATH, requestPath)
+	caveats := append(lsatmiddleware.Caveats, requestPathCaveat)
 	//LSAT Header is present, verify it
-	err = lsat.VerifyLSAT(mac, lsatmiddleware.Caveats, lsatmiddleware.RootKey, preimage)
+	err = lsat.VerifyLSAT(mac, caveats, lsatmiddleware.RootKey, preimage)
 	if err != nil {
 		//not a valid LSAT
 		c.Set("LSAT", &lsat.LsatInfo{
@@ -93,7 +98,10 @@ func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
 		})
 		return
 	}
-	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, lsatmiddleware.Caveats, lsatmiddleware.RootKey)
+	requestPath := c.Request.URL.Path
+	requestPathCaveat := caveat.NewCaveat(REQUEST_PATH, requestPath)
+	caveats := append(lsatmiddleware.Caveats, requestPathCaveat)
+	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, caveats, lsatmiddleware.RootKey)
 	if err != nil {
 		c.Set("LSAT", &lsat.LsatInfo{
 			Type:  lsat.LSAT_TYPE_ERROR,

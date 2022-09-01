@@ -21,7 +21,7 @@ const SATS_PER_BTC = 100000000
 
 const MIN_SATS_TO_BE_PAID = 1
 
-const Path = "Path"
+const BASE_URL = "BaseURL"
 
 type FiatRateConfig struct {
 	Currency string
@@ -75,8 +75,8 @@ func main() {
 		},
 		Caveats: []caveat.Caveat{
 			{
-				Condition: Path,
-				Value:     os.Getenv("PATH"),
+				Condition: BASE_URL,
+				Value:     os.Getenv("BASE_URL"),
 			},
 			// More caveats can be added here
 		},

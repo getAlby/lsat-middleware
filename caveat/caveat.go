@@ -24,6 +24,10 @@ func DecodeCaveat(caveatString string) (Caveat, error) {
 	return Caveat{Condition: splitted[0], Value: splitted[1]}, nil
 }
 
+func NewCaveat(condition string, value string) Caveat {
+	return Caveat{Condition: condition, Value: value}
+}
+
 func AddFirstPartyCaveats(mac *macaroon.Macaroon, caveats []Caveat) error {
 	for _, c := range caveats {
 		rawCaveat := []byte(EncodeCaveat(c))

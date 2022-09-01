@@ -74,8 +74,8 @@ func TestEchoLsatWithLNURLConfig(t *testing.T) {
 		},
 		Caveats: []caveat.Caveat{
 			{
-				Condition: Path,
-				Value:     os.Getenv("PATH"),
+				Condition: BASE_URL,
+				Value:     os.Getenv("BASE_URL"),
 			},
 		},
 		RootKey: []byte(ROOT_KEY),
@@ -175,8 +175,8 @@ func TestEchoLsatWithLNDConfig(t *testing.T) {
 		},
 		Caveats: []caveat.Caveat{
 			{
-				Condition: Path,
-				Value:     os.Getenv("PATH"),
+				Condition: BASE_URL,
+				Value:     os.Getenv("BASE_URL"),
 			},
 		},
 		RootKey: []byte(ROOT_KEY),

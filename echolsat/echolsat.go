@@ -16,6 +16,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const REQUEST_PATH = "RequestPath"
+
 type EchoLsatMiddleware struct {
 	AmountFunc func(req *http.Request) (amount int64)
 	LNClient   ln.LNClient
@@ -58,8 +60,11 @@ func (lsatmiddleware *EchoLsatMiddleware) Handler(next echo.HandlerFunc) echo.Ha
 			})
 			return next(c)
 		}
+		requestPath := c.Request().URL.Path
+		requestPathCaveat := caveat.NewCaveat(REQUEST_PATH, requestPath)
+		caveats := append(lsatmiddleware.Caveats, requestPathCaveat)
 		//LSAT Header is present, verify it
-		err = lsat.VerifyLSAT(mac, lsatmiddleware.Caveats, lsatmiddleware.RootKey, preimage)
+		err = lsat.VerifyLSAT(mac, caveats, lsatmiddleware.RootKey, preimage)
 		if err != nil {
 			//not a valid LSAT
 			c.Set("LSAT", &lsat.LsatInfo{
@@ -97,7 +102,10 @@ func (lsatmiddleware *EchoLsatMiddleware) SetLSATHeader(c echo.Context) {
 		})
 		return
 	}
-	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, lsatmiddleware.Caveats, lsatmiddleware.RootKey)
+	requestPath := c.Request().URL.Path
+	requestPathCaveat := caveat.NewCaveat(REQUEST_PATH, requestPath)
+	caveats := append(lsatmiddleware.Caveats, requestPathCaveat)
+	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, caveats, lsatmiddleware.RootKey)
 	if err != nil {
 		c.Set("LSAT", &lsat.LsatInfo{
 			Type:  lsat.LSAT_TYPE_ERROR,
