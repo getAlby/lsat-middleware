@@ -26,6 +26,7 @@ jobs:
               echo MACAROON_HEX=${{ secrets.MACAROON_HEX }} >> .env
               echo LNURL_ADDRESS=${{ secrets.LNURL_ADDRESS }} >> .env
               echo ROOT_KEY=${{ secrets.ROOT_KEY }} >> .env
+              echo BASE_URL=${{ secrets.BASE_URL }} >> .env
               cat .env
           - name: Run tests
             run:  go test -v ./...
