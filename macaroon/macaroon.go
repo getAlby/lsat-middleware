@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 
+	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/lightningnetwork/lnd/lntypes"
 	"gopkg.in/macaroon.v2"
 )
@@ -16,7 +17,7 @@ type MacaroonIdentifier struct {
 	TokenId     [32]byte
 }
 
-func GetMacaroonAsString(paymentHash lntypes.Hash, rootKey []byte) (string, error) {
+func GetMacaroonAsString(paymentHash lntypes.Hash, caveats []caveat.Caveat, rootKey []byte) (string, error) {
 	// rootKey, err := generateRootKey()
 	// if err != nil {
 	// 	return "", err
@@ -34,6 +35,10 @@ func GetMacaroonAsString(paymentHash lntypes.Hash, rootKey []byte) (string, erro
 		macaroon.LatestVersion,
 	)
 	if err != nil {
+		return "", err
+	}
+
+	if err := caveat.AddFirstPartyCaveats(mac, caveats); err != nil {
 		return "", err
 	}
 

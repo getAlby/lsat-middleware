@@ -8,8 +8,12 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/ginlsat"
 	"github.com/getAlby/lsat-middleware/ln"
+	"github.com/getAlby/lsat-middleware/lsat"
+	"github.com/getAlby/lsat-middleware/middleware"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -17,6 +21,8 @@ import (
 const SATS_PER_BTC = 100000000
 
 const MIN_SATS_TO_BE_PAID = 1
+
+const BASE_URL = "BaseURL"
 
 type FiatRateConfig struct {
 	Currency string
@@ -68,32 +74,42 @@ func main() {
 		LNURLConfig: ln.LNURLoptions{
 			Address: os.Getenv("LNURL_ADDRESS"),
 		},
+		Caveats: []caveat.Caveat{
+			{
+				Condition: BASE_URL,
+				Value:     os.Getenv("BASE_URL"),
+			},
+			// More caveats can be added here
+		},
 		RootKey: []byte(os.Getenv("ROOT_KEY")),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	if err != nil {
 		log.Fatal(err)
 	}
+	ginlsatmiddleware := &ginlsat.GinLsat{
+		Middleware: *lsatmiddleware,
+	}
 
-	router.Use(lsatmiddleware.Handler)
+	router.Use(ginlsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
-		lsatInfo := c.Value("LSAT").(*ginlsat.LsatInfo)
-		if lsatInfo.Type == ginlsat.LSAT_TYPE_FREE {
+		lsatInfo := c.Value("LSAT").(*lsat.LsatInfo)
+		if lsatInfo.Type == lsat.LSAT_TYPE_FREE {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
 				"message": "Free content",
 			})
-		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_PAID {
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_PAID {
 			c.JSON(http.StatusAccepted, gin.H{
 				"code":    http.StatusAccepted,
 				"message": "Protected content",
 			})
-		} else if lsatInfo.Type == ginlsat.LSAT_TYPE_ERROR {
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_ERROR {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"code":    http.StatusInternalServerError,
 				"message": fmt.Sprint(lsatInfo.Error),
