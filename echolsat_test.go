@@ -12,6 +12,7 @@ import (
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
 	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
+	"github.com/getAlby/lsat-middleware/middleware"
 	"github.com/getAlby/lsat-middleware/utils"
 
 	"github.com/labstack/echo/v4"
@@ -22,7 +23,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func echoLsatHandler(lsatmiddleware *echolsat.EchoLsatMiddleware) *echo.Echo {
+func echoLsatHandler(lsatmiddleware *echolsat.EchoLsat) *echo.Echo {
 	router := echo.New()
 
 	router.GET("/", func(c echo.Context) error {
@@ -84,10 +85,14 @@ func TestEchoLsatWithLNURLConfig(t *testing.T) {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := echolsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	assert.NoError(t, err)
 
-	handler := echoLsatHandler(lsatmiddleware)
+	echolsatmiddleware := &echolsat.EchoLsat{
+		Middleware: *lsatmiddleware,
+	}
+
+	handler := echoLsatHandler(echolsatmiddleware)
 
 	router := gofight.New()
 
@@ -185,10 +190,14 @@ func TestEchoLsatWithLNDConfig(t *testing.T) {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := echolsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	assert.NoError(t, err)
 
-	handler := echoLsatHandler(lsatmiddleware)
+	echolsatmiddleware := &echolsat.EchoLsat{
+		Middleware: *lsatmiddleware,
+	}
+
+	handler := echoLsatHandler(echolsatmiddleware)
 
 	router := gofight.New()
 

@@ -12,6 +12,7 @@ import (
 	"github.com/getAlby/lsat-middleware/echolsat"
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
+	"github.com/getAlby/lsat-middleware/middleware"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -86,12 +87,15 @@ func main() {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := echolsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	if err != nil {
 		log.Fatal(err)
 	}
+	echolsatmiddleware := &echolsat.EchoLsat{
+		Middleware: *lsatmiddleware,
+	}
 
-	router.Use(lsatmiddleware.Handler)
+	router.Use(echolsatmiddleware.Handler)
 
 	router.GET("/protected", func(c echo.Context) error {
 		lsatInfo := c.Get("LSAT").(*lsat.LsatInfo)

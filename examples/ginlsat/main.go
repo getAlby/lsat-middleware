@@ -12,6 +12,7 @@ import (
 	"github.com/getAlby/lsat-middleware/ginlsat"
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
+	"github.com/getAlby/lsat-middleware/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -86,12 +87,15 @@ func main() {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	if err != nil {
 		log.Fatal(err)
 	}
+	ginlsatmiddleware := &ginlsat.GinLsat{
+		Middleware: *lsatmiddleware,
+	}
 
-	router.Use(lsatmiddleware.Handler)
+	router.Use(ginlsatmiddleware.Handler)
 
 	router.GET("/protected", func(c *gin.Context) {
 		lsatInfo := c.Value("LSAT").(*lsat.LsatInfo)

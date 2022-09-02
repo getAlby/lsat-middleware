@@ -12,6 +12,7 @@ import (
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
 	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
+	"github.com/getAlby/lsat-middleware/middleware"
 	"github.com/getAlby/lsat-middleware/utils"
 
 	"github.com/appleboy/gofight/v2"
@@ -21,7 +22,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func ginLsatHandler(lsatmiddleware *ginlsat.GinLsatMiddleware) *gin.Engine {
+func ginLsatHandler(lsatmiddleware *ginlsat.GinLsat) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 
@@ -80,10 +81,14 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	assert.NoError(t, err)
 
-	handler := ginLsatHandler(lsatmiddleware)
+	ginlsatmiddleware := &ginlsat.GinLsat{
+		Middleware: *lsatmiddleware,
+	}
+
+	handler := ginLsatHandler(ginlsatmiddleware)
 
 	router := gofight.New()
 
@@ -179,10 +184,14 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := ginlsat.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
 	assert.NoError(t, err)
 
-	handler := ginLsatHandler(lsatmiddleware)
+	ginlsatmiddleware := &ginlsat.GinLsat{
+		Middleware: *lsatmiddleware,
+	}
+
+	handler := ginLsatHandler(ginlsatmiddleware)
 
 	router := gofight.New()
 

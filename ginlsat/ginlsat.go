@@ -10,37 +10,18 @@ import (
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
 	macaroonutils "github.com/getAlby/lsat-middleware/macaroon"
+	"github.com/getAlby/lsat-middleware/middleware"
 	"github.com/getAlby/lsat-middleware/utils"
+	"github.com/lightningnetwork/lnd/lnrpc"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lightningnetwork/lnd/lnrpc"
 )
 
-const REQUEST_PATH = "RequestPath"
-
-type GinLsatMiddleware struct {
-	AmountFunc func(req *http.Request) (amount int64)
-	LNClient   ln.LNClient
-	Caveats    []caveat.Caveat
-	RootKey    []byte
+type GinLsat struct {
+	Middleware middleware.LsatMiddleware
 }
 
-func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
-	amountFunc func(req *http.Request) (amount int64)) (*GinLsatMiddleware, error) {
-	lnClient, err := ln.InitLnClient(lnClientConfig)
-	if err != nil {
-		return nil, err
-	}
-	middleware := &GinLsatMiddleware{
-		AmountFunc: amountFunc,
-		LNClient:   lnClient,
-		Caveats:    lnClientConfig.Caveats,
-		RootKey:    lnClientConfig.RootKey,
-	}
-	return middleware, nil
-}
-
-func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
+func (lsatmiddleware *GinLsat) Handler(c *gin.Context) {
 	//First check for presence of authorization header
 	authField := c.Request.Header.Get("Authorization")
 	mac, preimage, err := utils.ParseLsatHeader(authField)
@@ -58,10 +39,10 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 		return
 	}
 	requestPath := c.Request.URL.Path
-	requestPathCaveat := caveat.NewCaveat(REQUEST_PATH, requestPath)
-	caveats := append(lsatmiddleware.Caveats, requestPathCaveat)
+	requestPathCaveat := caveat.NewCaveat(middleware.REQUEST_PATH, requestPath)
+	caveats := append(lsatmiddleware.Middleware.Caveats, requestPathCaveat)
 	//LSAT Header is present, verify it
-	err = lsat.VerifyLSAT(mac, caveats, lsatmiddleware.RootKey, preimage)
+	err = lsat.VerifyLSAT(mac, caveats, lsatmiddleware.Middleware.RootKey, preimage)
 	if err != nil {
 		//not a valid LSAT
 		c.Set("LSAT", &lsat.LsatInfo{
@@ -80,15 +61,15 @@ func (lsatmiddleware *GinLsatMiddleware) Handler(c *gin.Context) {
 
 }
 
-func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
+func (lsatmiddleware *GinLsat) SetLSATHeader(c *gin.Context) {
 	// Generate invoice and token
 	ctx := context.Background()
 	lnInvoice := lnrpc.Invoice{
-		Value: lsatmiddleware.AmountFunc(c.Request),
+		Value: lsatmiddleware.Middleware.AmountFunc(c.Request),
 		Memo:  "LSAT",
 	}
 	LNClientConn := &ln.LNClientConn{
-		LNClient: lsatmiddleware.LNClient,
+		LNClient: lsatmiddleware.Middleware.LNClient,
 	}
 	invoice, paymentHash, err := LNClientConn.GenerateInvoice(ctx, lnInvoice, c.Request)
 	if err != nil {
@@ -99,9 +80,9 @@ func (lsatmiddleware *GinLsatMiddleware) SetLSATHeader(c *gin.Context) {
 		return
 	}
 	requestPath := c.Request.URL.Path
-	requestPathCaveat := caveat.NewCaveat(REQUEST_PATH, requestPath)
-	caveats := append(lsatmiddleware.Caveats, requestPathCaveat)
-	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, caveats, lsatmiddleware.RootKey)
+	requestPathCaveat := caveat.NewCaveat(middleware.REQUEST_PATH, requestPath)
+	caveats := append(lsatmiddleware.Middleware.Caveats, requestPathCaveat)
+	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, caveats, lsatmiddleware.Middleware.RootKey)
 	if err != nil {
 		c.Set("LSAT", &lsat.LsatInfo{
 			Type:  lsat.LSAT_TYPE_ERROR,
