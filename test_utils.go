@@ -23,8 +23,6 @@ const (
 	ROOT_KEY = "ABDEGHKLMPTC"
 )
 
-const BASE_URL = "BaseURL"
-
 func FiatToBTC(currency string, value float64) *http.Request {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://blockchain.info/tobtc?currency=%s&value=%f", currency, value), nil)
 	if err != nil {

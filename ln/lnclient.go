@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
 	"google.golang.org/grpc"
@@ -20,7 +19,6 @@ type LNClientConfig struct {
 	LNClientType string
 	LNDConfig    LNDoptions
 	LNURLConfig  LNURLoptions
-	Caveats      []caveat.Caveat
 	RootKey      []byte
 }
 type LNClient interface {

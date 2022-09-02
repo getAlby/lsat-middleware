@@ -25,11 +25,15 @@ func (lsatmiddleware *GinLsat) Handler(c *gin.Context) {
 	//First check for presence of authorization header
 	authField := c.Request.Header.Get("Authorization")
 	mac, preimage, err := utils.ParseLsatHeader(authField)
+	caveats := []caveat.Caveat{}
+	if lsatmiddleware.Middleware.CaveatFunc != nil {
+		caveats = lsatmiddleware.Middleware.CaveatFunc(c.Request)
+	}
 	if err != nil {
 		// No Authorization present, check if client supports LSAT
 		acceptLsatField := c.Request.Header.Get(lsat.LSAT_HEADER_NAME)
 		if strings.Contains(acceptLsatField, lsat.LSAT_HEADER) {
-			lsatmiddleware.SetLSATHeader(c)
+			lsatmiddleware.SetLSATHeader(c, caveats)
 			return
 		}
 		// Set LSAT type Free if client does not support LSAT
@@ -38,9 +42,6 @@ func (lsatmiddleware *GinLsat) Handler(c *gin.Context) {
 		})
 		return
 	}
-	requestPath := c.Request.URL.Path
-	requestPathCaveat := caveat.NewCaveat(middleware.REQUEST_PATH, requestPath)
-	caveats := append(lsatmiddleware.Middleware.Caveats, requestPathCaveat)
 	//LSAT Header is present, verify it
 	err = lsat.VerifyLSAT(mac, caveats, lsatmiddleware.Middleware.RootKey, preimage)
 	if err != nil {
@@ -53,6 +54,13 @@ func (lsatmiddleware *GinLsat) Handler(c *gin.Context) {
 	}
 	//LSAT verification ok, mark client as having paid
 	macaroonId, err := macaroonutils.GetMacIdFromMacaroon(mac)
+	if err != nil {
+		c.Set("LSAT", &lsat.LsatInfo{
+			Type:  lsat.LSAT_TYPE_ERROR,
+			Error: err,
+		})
+		return
+	}
 	c.Set("LSAT", &lsat.LsatInfo{
 		Type:        lsat.LSAT_TYPE_PAID,
 		Preimage:    preimage,
@@ -61,7 +69,7 @@ func (lsatmiddleware *GinLsat) Handler(c *gin.Context) {
 
 }
 
-func (lsatmiddleware *GinLsat) SetLSATHeader(c *gin.Context) {
+func (lsatmiddleware *GinLsat) SetLSATHeader(c *gin.Context, caveats []caveat.Caveat) {
 	// Generate invoice and token
 	ctx := context.Background()
 	lnInvoice := lnrpc.Invoice{
@@ -79,9 +87,6 @@ func (lsatmiddleware *GinLsat) SetLSATHeader(c *gin.Context) {
 		})
 		return
 	}
-	requestPath := c.Request.URL.Path
-	requestPathCaveat := caveat.NewCaveat(middleware.REQUEST_PATH, requestPath)
-	caveats := append(lsatmiddleware.Middleware.Caveats, requestPathCaveat)
 	macaroonString, err := macaroonutils.GetMacaroonAsString(paymentHash, caveats, lsatmiddleware.Middleware.RootKey)
 	if err != nil {
 		c.Set("LSAT", &lsat.LsatInfo{
