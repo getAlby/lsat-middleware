@@ -260,7 +260,7 @@ func TestEchoLsatWithLNDConfig(t *testing.T) {
 func PathCaveat(req *http.Request) []caveat.Caveat {
 	return []caveat.Caveat{
 		{
-			Condition: "REQUEST_PATH",
+			Condition: "RequestPath",
 			Value:     req.URL.Path,
 		},
 	}

@@ -57,8 +57,6 @@ func VerifyCaveats(rawCaveats []string, conditions []Caveat) error {
 func CheckIfConditionsMatchCaveats(caveats []Caveat, conditions []Caveat) bool {
 	// A macaroon can have more caveats (Third-party as well) than expected conditions
 	// but atleast should contain caveats for required conditions
-	fmt.Println(caveats)
-	fmt.Println(conditions)
 	if len(caveats) < len(conditions) {
 		return false
 	}
