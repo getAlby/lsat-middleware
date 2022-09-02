@@ -7,25 +7,25 @@ import (
 	"github.com/getAlby/lsat-middleware/ln"
 )
 
-const REQUEST_PATH = "RequestPath"
-
+type amountFunc func(*http.Request) int64
+type caveatFunc func(*http.Request) []caveat.Caveat
 type LsatMiddleware struct {
-	AmountFunc func(req *http.Request) (amount int64)
+	AmountFunc amountFunc
 	LNClient   ln.LNClient
-	Caveats    []caveat.Caveat
+	CaveatFunc caveatFunc
 	RootKey    []byte
 }
 
 func NewLsatMiddleware(lnClientConfig *ln.LNClientConfig,
-	amountFunc func(req *http.Request) (amount int64)) (*LsatMiddleware, error) {
+	amountF amountFunc, caveatF caveatFunc) (*LsatMiddleware, error) {
 	lnClient, err := ln.InitLnClient(lnClientConfig)
 	if err != nil {
 		return nil, err
 	}
 	middleware := &LsatMiddleware{
-		AmountFunc: amountFunc,
+		AmountFunc: amountF,
 		LNClient:   lnClient,
-		Caveats:    lnClientConfig.Caveats,
+		CaveatFunc: caveatF,
 		RootKey:    lnClientConfig.RootKey,
 	}
 	return middleware, nil

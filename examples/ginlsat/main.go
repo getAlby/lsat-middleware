@@ -22,8 +22,6 @@ const SATS_PER_BTC = 100000000
 
 const MIN_SATS_TO_BE_PAID = 1
 
-const BASE_URL = "BaseURL"
-
 type FiatRateConfig struct {
 	Currency string
 	Amount   float64
@@ -74,20 +72,13 @@ func main() {
 		LNURLConfig: ln.LNURLoptions{
 			Address: os.Getenv("LNURL_ADDRESS"),
 		},
-		Caveats: []caveat.Caveat{
-			{
-				Condition: BASE_URL,
-				Value:     os.Getenv("BASE_URL"),
-			},
-			// More caveats can be added here
-		},
 		RootKey: []byte(os.Getenv("ROOT_KEY")),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc, PathCaveat)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,6 +107,34 @@ func main() {
 			})
 		}
 	})
+	router.GET("/protected/2", func(c *gin.Context) {
+		lsatInfo := c.Value("LSAT").(*lsat.LsatInfo)
+		if lsatInfo.Type == lsat.LSAT_TYPE_FREE {
+			c.JSON(http.StatusAccepted, gin.H{
+				"code":    http.StatusAccepted,
+				"message": "Free content",
+			})
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_PAID {
+			c.JSON(http.StatusAccepted, gin.H{
+				"code":    http.StatusAccepted,
+				"message": "Protected content",
+			})
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_ERROR {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
+				"message": fmt.Sprint(lsatInfo.Error),
+			})
+		}
+	})
 
 	router.Run("localhost:8080")
+}
+
+func PathCaveat(req *http.Request) []caveat.Caveat {
+	return []caveat.Caveat{
+		{
+			Condition: "RequestPath",
+			Value:     req.URL.Path,
+		},
+	}
 }

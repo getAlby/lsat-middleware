@@ -49,7 +49,7 @@ func VerifyCaveats(rawCaveats []string, conditions []Caveat) error {
 		caveats = append(caveats, caveat)
 	}
 	if !CheckIfConditionsMatchCaveats(caveats, conditions) {
-		return fmt.Errorf("Caveats does not match")
+		return fmt.Errorf("Caveats don't match")
 	}
 	return nil
 }

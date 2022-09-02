@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/ginlsat"
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
@@ -69,19 +68,13 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 		LNURLConfig: ln.LNURLoptions{
 			Address: LNURL_ADDRESS,
 		},
-		Caveats: []caveat.Caveat{
-			{
-				Condition: BASE_URL,
-				Value:     os.Getenv("BASE_URL"),
-			},
-		},
 		RootKey: []byte(ROOT_KEY),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc, PathCaveat)
 	assert.NoError(t, err)
 
 	ginlsatmiddleware := &ginlsat.GinLsat{
@@ -154,7 +147,7 @@ func TestGinLsatWithLNURLConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, fmt.Sprintf("Caveats does not match"), message)
+			assert.Equal(t, fmt.Sprintf("Caveats don't match"), message)
 			assert.Equal(t, http.StatusInternalServerError, res.Code)
 		})
 }
@@ -172,19 +165,13 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 			Address:     LND_ADDRESS,
 			MacaroonHex: MACAROON_HEX,
 		},
-		Caveats: []caveat.Caveat{
-			{
-				Condition: BASE_URL,
-				Value:     os.Getenv("BASE_URL"),
-			},
-		},
 		RootKey: []byte(ROOT_KEY),
 	}
 	fr := &FiatRateConfig{
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc, PathCaveat)
 	assert.NoError(t, err)
 
 	ginlsatmiddleware := &ginlsat.GinLsat{
@@ -257,7 +244,7 @@ func TestGinLsatWithLNDConfig(t *testing.T) {
 		Run(handler, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
 			message := fmt.Sprint(gjson.Get(res.Body.String(), "message"))
 
-			assert.Equal(t, fmt.Sprintf("Caveats does not match"), message)
+			assert.Equal(t, fmt.Sprintf("Caveats don't match"), message)
 			assert.Equal(t, http.StatusInternalServerError, res.Code)
 		})
 }
