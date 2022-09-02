@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/getAlby/lsat-middleware/caveat"
 	"github.com/getAlby/lsat-middleware/ginlsat"
 	"github.com/getAlby/lsat-middleware/ln"
 	"github.com/getAlby/lsat-middleware/lsat"
@@ -77,7 +78,7 @@ func main() {
 		Currency: "USD",
 		Amount:   0.01,
 	}
-	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc, nil)
+	lsatmiddleware, err := middleware.NewLsatMiddleware(lnClientConfig, fr.FiatToBTCAmountFunc, PathCaveat)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,6 +107,34 @@ func main() {
 			})
 		}
 	})
+	router.GET("/protected/2", func(c *gin.Context) {
+		lsatInfo := c.Value("LSAT").(*lsat.LsatInfo)
+		if lsatInfo.Type == lsat.LSAT_TYPE_FREE {
+			c.JSON(http.StatusAccepted, gin.H{
+				"code":    http.StatusAccepted,
+				"message": "Free content",
+			})
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_PAID {
+			c.JSON(http.StatusAccepted, gin.H{
+				"code":    http.StatusAccepted,
+				"message": "Protected content",
+			})
+		} else if lsatInfo.Type == lsat.LSAT_TYPE_ERROR {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
+				"message": fmt.Sprint(lsatInfo.Error),
+			})
+		}
+	})
 
 	router.Run("localhost:8080")
+}
+
+func PathCaveat(req *http.Request) []caveat.Caveat {
+	return []caveat.Caveat{
+		{
+			Condition: "RequestPath",
+			Value:     req.URL.Path,
+		},
+	}
 }
