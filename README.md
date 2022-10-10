@@ -31,7 +31,7 @@ See the `examples` directory.
 
 [This repo](https://github.com/getAlby/lsat-proxy) demonstrates serving of static files and creating a paywall for paid resources using LSAT-Middleware.
 
-[InSATgram](https://insatgram.getalby.com/), A platform to buy and sell images for sats made using LSAT-Middleware ([link to repo](https://github.com/getAlby/sell-lsat-files)).
+[Nakaphoto](https://nakaphoto.vercel.app/), A platform to buy and sell images for sats made using LSAT-Middleware ([link to repo](https://github.com/getAlby/sell-lsat-files)).
 
 
 ## Testing
